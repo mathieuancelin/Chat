@@ -1,24 +1,24 @@
 #{extends 'main.html' /}
-#{set title:'Room ' + room /}
+#{set title:'Room "' + room + '"'/}
 
-<h1>You are now chatting as ${user} <a href="@{leave(user, room)}">Leave the chat</a> 
-    | <a id="new-chatroom" href="#">New chat room</a></h1> 
+<h1>You are now chatting as ${user.name}
+    | <a href="@{leave(room)}">Leave the chat</a>
+    | <a id="new-chatroom" href="#">New chat room</a>
+    | <a href="@{index()}">Home</a></h1>
 <div id="rooms">
     <h1>Available rooms</h1>
-    <ul>
     #{list rooms}
-    <li><a href="@{room(user, _.name)}">${_.name}</a></li>
+    <div id="room"><a href="@{room(_.name)}">${_.name}</a></div>
     #{/list}
-    </ul>
 </div>
 #{if room != 'welcome'}
 <div id="thread-title">
-    Hello world
+${roomTitle}
 </div>
 <div id="thread">
     #{list events}
         #{if _.type == models.MessageType.HTML}
-            <div class="message ${_.user == user ? 'you' : ''}">
+            <div class="message ${_.user == user.name ? 'you' : ''}">
                 <h2>${_.user}</h2>
                 <p>
                     ${_.text.raw()}
@@ -45,7 +45,7 @@
 </div>
 
 <div id="newMessage">
-    #{form @say(user, room)}
+    #{form @say(room)}
     <input type="text" id="message" name="message" autocomplete="off" >
         <input type="submit" value="send" id="send">
     #{/}
@@ -58,13 +58,20 @@
 #{/if}
 
 <script type="text/javascript" charset="${_response_encoding}">
-    
+   
     $('#new-chatroom').click(function() {
         var name = prompt('Room name');
         $.post("@{rooms()}", {name: name}, function(room) {
-            $('ul').append(
-                '<li><a href="/' + name + '/' + '${user}">' + name + '</a></li>'
+            $('#rooms').append(
+                '<div id="room"><a href="/rooms/' + name + '">' + name + '</a></div>'
             );
+        });
+    });
+
+    $('#thread-title').click(function() {
+        var value = prompt('Title');
+        $.post("@{setTitle(room)}", {value: value}, function(room) {
+            $('#thread-title').html(value);
         });
     });
     
@@ -73,16 +80,21 @@
         $('#thread').scrollTo('max')
     }
 
+    var focusInput = function() {
+        $('#message').focus();
+    }
+
     // Reload the whole messages panel
     var refresh = function() {
-        $('#thread').load('@{room(user, room)} #thread .message', function() {
-            scrollDown()
+        $('#thread').load('@{room(room)} #thread .message', function() {
+            focusInput()
         })
     }
     
     // Call refresh every 5 seconds
-    setInterval(refresh, 1000)
+    setInterval(refresh, 1000);
     
-    scrollDown()
+    scrollDown();
+    focusInput();
     
 </script>

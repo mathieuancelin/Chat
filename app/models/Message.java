@@ -2,14 +2,20 @@ package models;
 
 import java.util.List;
 import javax.persistence.Entity;
+import javax.persistence.Lob;
 import javax.persistence.ManyToOne;
+import net.sf.oval.constraint.MaxSize;
 import play.db.jpa.Model;
 
 @Entity
 public class Message extends Model {
-    
+
     public String user;
+
+    @Lob
+    @MaxSize(100000)
     public String text;
+
     public Long timestamp;
     public MessageType type;
     

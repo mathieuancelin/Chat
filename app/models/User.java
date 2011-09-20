@@ -34,5 +34,9 @@ public class User extends Model {
     public String avatarUrl;
     
     public String gravatar;
+
+    public static User fromEmail(@Required @Email String mail) {
+        return User.find("byMail", mail).first();
+    }
     
 }

@@ -61,6 +61,24 @@ h1 {
     font-weight: normal;
 }
 
+#drop {
+    background: #111;
+    position: fixed;
+    top: 800px;
+}
+
+#room {
+    background: #e0e0df;
+    margin: 0;
+    color: gold;
+    padding: 7px 14px;
+    font-size: 14px;
+    font-weight: normal;
+    border-bottom: 1px solid #666;
+    border-left: 1px solid #666;
+    border-right: 1px solid #666;
+}
+
 h1 a {
     right: 1em;
     color: lightblue;

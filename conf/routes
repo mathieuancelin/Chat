@@ -2,15 +2,19 @@
 # This file defines all application routes (Higher priority routes first)
 # ~~~~
 
-# Login
 GET     /                                       Application.index
-GET     /signin                                 Application.enter
+GET     /signin                                 Application.signin
+GET     /login                                  Application.enter
 GET     /register                               Application.register
 POST    /registration                           Application.registration
+GET     /captcha                                Application.captcha
+POST    /upload                                 Application.upload
 
-GET     /{room}/{user}                          Application.room
-POST    /say                                    Application.say
-GET     /{room}/{user}/leave                    Application.leave         
+GET     /rooms/{room}                           Application.room
+GET     /rooms/{room}/title                     Application.getTitle
+POST    /rooms/{room}/title                     Application.setTitle
+POST    /rooms/{room}/say                       Application.say
+GET     /rooms/{room}/leave                     Application.leave
 POST    /rooms                                  Application.newChatRoom  
 GET     /rooms                                  Application.rooms 
 

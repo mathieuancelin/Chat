@@ -45,7 +45,12 @@
                 <label>Avatar</label>
                 <input type="text" name="avatar" id="avatar">
             </p>
-            
+            <p>
+                <label for="code">Please type the code below: </label>
+                <input type="text" name="code" id="code" size="18" value="" />
+                <img src="@{Application.captcha(randomID)}" />
+                <input type="hidden" name="randomID" value="${randomID}" />
+            </p>
             <p>
                 <label></label>
                 <input type="submit" id="enter" value="Register">

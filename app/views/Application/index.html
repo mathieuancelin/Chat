@@ -4,28 +4,6 @@
 <div id="home">
 
     <h2>Campfire</h2>
-
-    <div id="signin">
-        #{form @enter()}
-            #{if flash.error}
-                <p class="error">
-                    ${flash.error}
-                </p>
-            #{/if}
-            <p>
-                <label for="nick">Username</label>
-                <input type="text" name="user" id="user">
-            </p>
-            <p>
-                <label for="password">Password</label>
-                <input type="password" name="password" id="password">
-            </p>
-            <p>
-                <label></label>
-                <input type="submit" id="enter" value="Enter the chat room">
-            </p>
-        #{/form}
-    </div>
-    <a href="@{register()}">Register</a>
+    <a href="@{signin()}">Sign in</a>
 
 </div>
