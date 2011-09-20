@@ -1,0 +1,88 @@
+#{extends 'main.html' /}
+#{set title:'Room ' + room /}
+
+<h1>You are now chatting as ${user} <a href="@{leave(user, room)}">Leave the chat</a> 
+    | <a id="new-chatroom" href="#">New chat room</a></h1> 
+<div id="rooms">
+    <h1>Available rooms</h1>
+    <ul>
+    #{list rooms}
+    <li><a href="@{room(user, _.name)}">${_.name}</a></li>
+    #{/list}
+    </ul>
+</div>
+#{if room != 'welcome'}
+<div id="thread-title">
+    Hello world
+</div>
+<div id="thread">
+    #{list events}
+        #{if _.type == models.MessageType.HTML}
+            <div class="message ${_.user == user ? 'you' : ''}">
+                <h2>${_.user}</h2>
+                <p>
+                    ${_.text.raw()}
+                </p>
+            </div>
+        #{/if}
+        #{if _.type == models.MessageType.JOIN}
+            <div class="message notice">
+                <h2></h2>
+                <p>
+                    ${_.user} joined the room
+                </p>
+            </div>
+        #{/if}
+        #{if _.type == models.MessageType.LEAVE}
+            <div class="message notice">
+                <h2></h2>
+                <p>
+                    ${_.user} left the room
+                </p>
+            </div>
+        #{/if}
+    #{/list}
+</div>
+
+<div id="newMessage">
+    #{form @say(user, room)}
+    <input type="text" id="message" name="message" autocomplete="off" >
+        <input type="submit" value="send" id="send">
+    #{/}
+</div>
+#{/if}
+
+
+#{if room == 'welcome'}
+<div id="welcome"><h1>Welcome to Campfire</h1></div>
+#{/if}
+
+<script type="text/javascript" charset="${_response_encoding}">
+    
+    $('#new-chatroom').click(function() {
+        var name = prompt('Room name');
+        $.post("@{rooms()}", {name: name}, function(room) {
+            $('ul').append(
+                '<li><a href="/' + name + '/' + '${user}">' + name + '</a></li>'
+            );
+        });
+    });
+    
+        // Scroll the messages panel to the end
+    var scrollDown = function() {
+        $('#thread').scrollTo('max')
+    }
+
+    // Reload the whole messages panel
+    var refresh = function() {
+        $('#thread').load('@{room(user, room)} #thread .message', function() {
+            scrollDown()
+        })
+    }
+    
+    // Call refresh every 5 seconds
+    setInterval(refresh, 1000)
+    
+    scrollDown()
+    
+</script>

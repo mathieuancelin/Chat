@@ -1,0 +1,19 @@
+# Routes
+# This file defines all application routes (Higher priority routes first)
+# ~~~~
+
+# Login
+GET     /                                       Application.index
+GET     /signin                                 Application.enter
+GET     /register                               Application.register
+POST    /registration                           Application.registration
+
+GET     /{room}/{user}                          Application.room
+POST    /say                                    Application.say
+GET     /{room}/{user}/leave                    Application.leave         
+POST    /rooms                                  Application.newChatRoom  
+GET     /rooms                                  Application.rooms 
+
+# Map static resources from the /app/public folder to the /public path
+GET     /public/                                staticDir:public
+
