@@ -16,15 +16,16 @@ public enum URLBot implements MessageHandler {
         private static final String R_RELATIVEPATH = "(/\\w+)*(/\\w+\\.\\w+)?";
         private static final String R_QUERY = "(\\?\\w+=\\w+(&(\\w+=\\w+))*)?";
         private static final String URL_REGEX = "^" + R_PROTOCOL + "://" + R_HOSTNAMEANDPORT + R_RELATIVEPATH + R_QUERY;
-
+        private static final String IMAGE_REGEX = "(https?:((//)|(\\\\))+[\\w\\d:#@%/;$()~_?\\+-=\\\\.&]*)";
+        
         public Message handleChatMessage(Message message, User user, ChatRoom room) {
-            Pattern p = Pattern.compile(URL_REGEX);
             String text = message.text;
-            Matcher m = p.matcher(text);
-            while(m.find()) {
-                String url = m.group();
-                String html = "<a href=\"" + url + "\">" + url + "</a>";
-                text = text.replace(url, html);
+            String[] words = message.text.split(" ");
+            for (String word : words) {
+                if (word.startsWith("http://") || word.startsWith("https://")) {
+                    String html = "<a href=\"" + word + "\">" + word + "</a>";
+                    text = text.replace(word, html);
+                }
             }
             message.text = text;
             return message.save();

@@ -40,5 +40,9 @@ public class Message extends Model {
         return Message.find("byUser", user).fetch();
     }
     
+    public String username() {
+        return User.findByEmail(user).username;
+    }
+    
     
 }

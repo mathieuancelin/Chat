@@ -11,16 +11,14 @@ public enum ImagesBot implements MessageHandler {
 
     INSTANCE {
 
-        private static final String URL_REGEX = "^(?:(?![^:@]+:[^:@/]*@)([^:/?#.]+):)?(?://)?((?:(([^:@]*):?([^:@]*))?@)?([^:/?#]*)(?::(\\d*))?)(((/(?:[^?#](?![^?#/]*\\.[^?#/.]+(?:[?#]|$)))*/?)?([^?#/]*))(?:\\?([^#]*))?(?:#(.*))?)";
-
+        private static final String IMAGE_REGEX = "(https?:((//)|(\\\\))+[\\w\\d:#@%/;$()~_?\\+-=\\\\.&]*)";
+        
         public Message handleChatMessage(Message message, User user, ChatRoom room) {
-            Pattern p = Pattern.compile(URL_REGEX);
+            Pattern p = Pattern.compile(IMAGE_REGEX);
             String text = message.text;
             Matcher m = p.matcher(text);
             while(m.find()) {
                 String url = m.group();
-                String html = "<a href=\"" + url + "\">" + url + "</a>";
-                text = text.replace(url, html);
                 if (url.endsWith(".jpg") || url.endsWith(".png")) {
                     text += "<br/><br/><img src=\"" + url + "\" >";
                 }

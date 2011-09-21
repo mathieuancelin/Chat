@@ -68,7 +68,7 @@ h1 {
 }
 
 #room {
-    background: #e0e0df;
+    background: #ffffff;/**#e0e0df;**/
     margin: 0;
     color: gold;
     padding: 7px 14px;
@@ -122,13 +122,15 @@ h1 a {
     right: 14px;
     bottom: 100px;
     background: white;
-    padding: 10px;
-    width: 200px
+    padding: 0px;
+    overflow-y: scroll;
+    width: 220px
 }
 
 .message {
     border-bottom: 1px solid #efefef;
     position: relative;
+    overflow: hidden;
 }
 
 .message h2 {

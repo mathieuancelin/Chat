@@ -1,14 +1,32 @@
 #{extends 'main.html' /}
 #{set title:'Room "' + room + '"'/}
 
-<h1>You are now chatting as ${user.name}
-    | <a href="@{leave(room)}">Leave the chat</a>
+<h1>You are now chatting as ${user.username}
     | <a id="new-chatroom" href="#">New chat room</a>
-    | <a href="@{index()}">Home</a></h1>
+    | <a href="@{Application.index()}">Home</a>
+    | <a href="@{leaveAllRooms()}">Disconnect</a>
+</h1>
 <div id="rooms">
     <h1>Available rooms</h1>
     #{list rooms}
     <div id="room"><a href="@{room(_.name)}">${_.name}</a></div>
+    #{/list}
+    #{if false}
+    <h1>Private rooms</h1>
+    #{list privateRooms}
+    #{if _.privateUser1 != user.mail}
+    <div id="room"><a href="@{Rooms.room(_.name)}">${_.privateUser1()}</a></div>
+    #{/if}
+    #{if _.privateUser2 != user.mail}
+    <div id="room"><a href="@{Rooms.room(_.name)}">${_.privateUser2()}</a></div>
+    #{/if}
+    #{/list}
+    #{/if}
+    <h1>Available people</h1>
+    #{list users}
+    #{if _.mail != user.mail}
+    <div id="room"><a href="@{Rooms.newPrivateRoom(user.mail, _.mail)}">${_.username}</a></div>
+    #{/if}
     #{/list}
 </div>
 #{if room != 'welcome'}
@@ -18,9 +36,9 @@ ${roomTitle}
 <div id="thread">
     #{list events}
         #{if _.type == models.MessageType.HTML}
-            <div class="message ${_.user == user.name ? 'you' : ''}">
-                <h2>${_.user}</h2>
-                <p>
+            <div class="message ${_.user == user.mail ? 'you' : ''}">
+                <h2>${_.username()}</h2>
+                <p style="text-align: justify">
                     ${_.text.raw()}
                 </p>
             </div>
@@ -29,7 +47,7 @@ ${roomTitle}
             <div class="message notice">
                 <h2></h2>
                 <p>
-                    ${_.user} joined the room
+                    ${_.username()} joined the room
                 </p>
             </div>
         #{/if}
@@ -37,7 +55,7 @@ ${roomTitle}
             <div class="message notice">
                 <h2></h2>
                 <p>
-                    ${_.user} left the room
+                    ${_.username()} left the room
                 </p>
             </div>
         #{/if}
@@ -61,10 +79,13 @@ ${roomTitle}
    
     $('#new-chatroom').click(function() {
         var name = prompt('Room name');
-        $.post("@{rooms()}", {name: name}, function(room) {
-            $('#rooms').append(
-                '<div id="room"><a href="/rooms/' + name + '">' + name + '</a></div>'
-            );
+        if (name == "" || name == null) {
+            name = "New room";
+        }
+        $.post("@{rooms()}", {name: name}, function(evt) {
+            $('#rooms').load("@{room(room)} #rooms", function() {
+                focusInput();
+            });
         });
     });
 
@@ -75,7 +96,6 @@ ${roomTitle}
         });
     });
     
-        // Scroll the messages panel to the end
     var scrollDown = function() {
         $('#thread').scrollTo('max')
     }
@@ -84,17 +104,16 @@ ${roomTitle}
         $('#message').focus();
     }
 
-    // Reload the whole messages panel
     var refresh = function() {
         $('#thread').load('@{room(room)} #thread .message', function() {
             focusInput()
         })
+        
     }
-    
-    // Call refresh every 5 seconds
-    setInterval(refresh, 1000);
-    
-    scrollDown();
-    focusInput();
+    $(document).ready( function() {
+        scrollDown();
+        focusInput();
+        setInterval(refresh, 1000);
+    });
     
 </script>

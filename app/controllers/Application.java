@@ -1,13 +1,13 @@
 package controllers;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
 import models.ChatRoom;
 import models.User;
 import play.cache.Cache;
+import play.data.validation.Email;
+import play.data.validation.Required;
+import play.data.validation.URL;
 import play.mvc.*;
-import play.data.validation.*;
 import play.libs.Codec;
 import play.libs.Files;
 import play.libs.Images;
@@ -17,42 +17,83 @@ public class Application extends Controller {
     public static final File uploads = new File("uploads");
 
     public static final String USER_KEY = "auth-user";
+    
+    public static final String FROM_KEY = "from-time";
+    
+    public static final String WELCOME_ROOM = "welcome";
+    
+    public static final String PRIVATE_KEY = "privroom-";
 
     public static void index() {
         boolean logged = false;
+        User user = null;
         if (session.contains(USER_KEY)) {
             logged = true;
+            user = User.findByEmail(session.get(USER_KEY));
+            if (user == null) {
+                logged = false;
+                session.clear();
+            }
         }
-        render(logged);
+        render(user, logged);
     }
 
     public static void signin() {
+        session.put(FROM_KEY, System.currentTimeMillis());
         boolean logged = false;
         if (session.contains(USER_KEY)) {
             logged = true;
         }
-        
-        render();
+        if (logged) {
+            User user = User.findByEmail(session.get(USER_KEY));
+            Rooms.room(WELCOME_ROOM);
+        }
+        render(logged);
     }
     
     public static void register() {
         String randomID = Codec.UUID();
-        render(randomID);
+        String username = "";
+        String password = "";
+        String name = "";
+        String surname = "";
+        String mail = "";
+        String avatar  ="";
+        render(randomID, username, password, name, surname, mail, avatar);
     }
     
-    public static void registration(String user, String password, String name, 
-            String surname, String phone, 
-            String mail, String address, 
-            String avatar, String gravatar, 
-            @Required(message="Please type the code") String code, String randomID) {
-        validation.equals(code, Cache.get(randomID))
-                .message("Invalid code. Please type it again");
-        if(validation.hasErrors()) {
+    public static void registration(
+            @Required String username, 
+            @Required String password, 
+            @Required String name, 
+            @Required String surname, 
+            String phone, 
+            @Required @Email String mail, 
+            String address, 
+            @URL String avatar, 
+            @URL String gravatar, 
+            @Required String code, 
+            @Required String randomID) {
+        
+        if (!validation.equals(code, Cache.get(randomID)).ok) {
             flash.error("Wrong CAPTCHA !!!");
+            randomID = Codec.UUID();
+            render("Application/register.html", randomID, username, 
+                    password, name, surname, mail, avatar);
+        }
+        if(validation.hasErrors()) {
+            flash.error(validation.errorsMap().toString());
             signin();
         }
+        User existing = User.find("byMail", mail).first();
+        if (existing != null) {
+            flash.error("Email address already exists");
+            randomID = Codec.UUID();
+            render("Application/register.html", randomID, username, 
+                    password, name, surname, mail, avatar);
+        }
         User u = new User();
-        u.username = user;
+        u.username = username;
         u.name = name;
         u.surname = surname;
         u.phone = phone;
@@ -61,88 +102,31 @@ public class Application extends Controller {
         u.avatarUrl = avatar;
         u.gravatar = gravatar;
         u.password = password;
+        u.connected = false;
         u.save();
         signin();
     }
     
-    public static void enter(@Required String user, @Required String password) {        
+    public static void enter(@Required @Email String user, @Required String password) {        
         if(validation.hasErrors()) {
             flash.error("Please choose a nick name and the channel.");
-            signin();
+            index();
         }
         User u = User.find("byMailLikeAndPassword", user, password).first();
         if (u == null) {
             flash.error("Please choose a valid user.");
-            signin();
+            index();
         }
         session.put(USER_KEY, u.mail);
         for (Object obj : ChatRoom.all().fetch()) {
             ChatRoom chat = ((ChatRoom) obj);
-            //if (!chat.closed) {
-                chat.join(user);
-            //}
+            if (!chat.closed) {
+                chat.join(u);
+            }
         }
-        room("welcome");
-    }
-    
-    public static void room(@Required String room) {
-        if (!session.contains(USER_KEY)) {
-            flash.error("Please choose a valid user.");
-            signin();
-        }
-        User user = User.fromEmail(session.get(USER_KEY));
-        List events = new ArrayList();
-        List rooms = ChatRoom.findAll();
-        String roomTitle = "";
-        if(!room.equals("welcome")) {
-            events = ChatRoom.get(room).archiveLast100();
-            roomTitle = ChatRoom.get(room).title;
-        }
-        render(user, events, room, rooms, roomTitle);
-    }
-    
-    public static void say(@Required String room, @Required String message) {
-        if (!session.contains(USER_KEY)) {
-            flash.error("Please choose a valid user.");
-            signin();
-        }
-        User user = User.fromEmail(session.get(USER_KEY));
-        ChatRoom.get(room).say(user.name, message);
-        room(room);
-    }
-    
-    public static void leave(String room) {
-        if (!session.contains(USER_KEY)) {
-            flash.error("Please choose a valid user.");
-            signin();
-        }
-        User user = User.fromEmail(session.get(USER_KEY));
-        ChatRoom.get(room).leave(user.name);
-        session.clear();
-        Application.signin();
-    }
-    
-    public static void newChatRoom(@Required String name) {
-        ChatRoom room = ChatRoom.newRoom(name, "New Thread ...");
-        room.save();
-        ok();
-    }
-    
-    public static void rooms() {
-        List rooms = ChatRoom.findAll();
-        render(rooms);
-    }
-
-    public static void setTitle(@Required String room, @Required String value) {
-        ChatRoom r = ChatRoom.get(room);
-        r.title = value;
-        r.save();
-        ok();
-    }
-
-    public static void getTitle(@Required String room) {
-        String value = ChatRoom.get(room).title;
-        renderText(value);
+        u.connected = true;
+        u.save();
+        Rooms.room(WELCOME_ROOM);
     }
 
     public static void captcha(String id) {

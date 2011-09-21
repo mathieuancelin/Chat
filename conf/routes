@@ -10,13 +10,15 @@ POST    /registration                           Application.registration
 GET     /captcha                                Application.captcha
 POST    /upload                                 Application.upload
 
-GET     /rooms/{room}                           Application.room
-GET     /rooms/{room}/title                     Application.getTitle
-POST    /rooms/{room}/title                     Application.setTitle
-POST    /rooms/{room}/say                       Application.say
-GET     /rooms/{room}/leave                     Application.leave
-POST    /rooms                                  Application.newChatRoom  
-GET     /rooms                                  Application.rooms 
+GET     /rooms/leave                            Rooms.leaveAllRooms
+GET     /rooms/private/{user1}/{user2}          Rooms.newPrivateRoom
+GET     /rooms/{room}                           Rooms.room
+GET     /rooms/{room}/title                     Rooms.getTitle
+POST    /rooms/{room}/title                     Rooms.setTitle
+POST    /rooms/{room}/say                       Rooms.say
+GET     /rooms/{room}/leave                     Rooms.leave
+POST    /rooms                                  Rooms.newChatRoom  
+GET     /rooms                                  Rooms.rooms 
 
 # Map static resources from the /app/public folder to the /public path
 GET     /public/                                staticDir:public

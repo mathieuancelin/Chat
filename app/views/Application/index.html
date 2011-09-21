@@ -2,8 +2,17 @@
 #{set title:'Sign in' /}
 
 <div id="home">
-
+    #{if logged}
+    <h1>You are now chatting as ${user.username}
+        | <a href="@{Rooms.leaveAllRooms()}">Disconnect</a>
+    </h1>
+    #{/if}
     <h2>Campfire</h2>
+    #{if logged}
+    <a href="@{Rooms.room('welcome')}">Go to rooms</a>
+    #{/if}
+    #{ifnot logged}
     <a href="@{signin()}">Sign in</a>
-
+    <a href="@{register()}">Register</a>
+    #{/ifnot}
 </div>

@@ -6,6 +6,7 @@ import play.data.validation.Phone;
 import play.data.validation.Required;
 import play.data.validation.URL;
 import play.db.jpa.Model;
+import play.libs.Codec;
 
 @Entity
 public class User extends Model {
@@ -34,9 +35,15 @@ public class User extends Model {
     public String avatarUrl;
     
     public String gravatar;
+    
+    public Boolean connected;
 
-    public static User fromEmail(@Required @Email String mail) {
+    public static User findByEmail(@Required @Email String mail) {
         return User.find("byMail", mail).first();
     }
     
+    public String emailHash() {
+        return Codec.hexSHA1(mail);
+    }
+     
 }
