@@ -11,7 +11,7 @@
     #{list rooms}
     <div id="room"><a href="@{room(_.name)}">${_.name}</a></div>
     #{/list}
-    #{if false}
+    *{
     <h1>Private rooms</h1>
     #{list privateRooms}
     #{if _.privateUser1 != user.mail}
@@ -21,7 +21,7 @@
     <div id="room"><a href="@{Rooms.room(_.name)}">${_.privateUser2()}</a></div>
     #{/if}
     #{/list}
-    #{/if}
+    }*
     <h1>Available people</h1>
     #{list users}
     #{if _.mail != user.mail}
@@ -107,8 +107,9 @@ ${roomTitle}
     var refresh = function() {
         $('#thread').load('@{room(room)} #thread .message', function() {
             focusInput()
-        })
-        
+        });
+        $('#rooms').load('@{room(room)} #rooms', function() {});
+        $('#thread-title').load('@{room(room)} #thread-title', function() {});
     }
     $(document).ready( function() {
         scrollDown();

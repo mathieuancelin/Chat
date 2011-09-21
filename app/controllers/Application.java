@@ -65,6 +65,7 @@ public class Application extends Controller {
     public static void registration(
             @Required String username, 
             @Required String password, 
+            @Required String repassword, 
             @Required String name, 
             @Required String surname, 
             String phone, 
@@ -74,7 +75,12 @@ public class Application extends Controller {
             @URL String gravatar, 
             @Required String code, 
             @Required String randomID) {
-        
+        if (!password.equals(repassword)) {
+            flash.error("Passwords don't match !");
+            randomID = Codec.UUID();
+            render("Application/register.html", randomID, username, 
+                    password, name, surname, mail, avatar);
+        }
         if (!validation.equals(code, Cache.get(randomID)).ok) {
             flash.error("Wrong CAPTCHA !!!");
             randomID = Codec.UUID();
@@ -101,7 +107,7 @@ public class Application extends Controller {
         u.address = address;
         u.avatarUrl = avatar;
         u.gravatar = gravatar;
-        u.password = password;
+        u.password = Codec.hexSHA1(password);
         u.connected = false;
         u.save();
         signin();
@@ -112,7 +118,7 @@ public class Application extends Controller {
             flash.error("Please choose a nick name and the channel.");
             index();
         }
-        User u = User.find("byMailLikeAndPassword", user, password).first();
+        User u = User.find("byMailLikeAndPassword", user, Codec.hexSHA1(password)).first();
         if (u == null) {
             flash.error("Please choose a valid user.");
             index();

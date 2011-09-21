@@ -59,6 +59,7 @@ h1 {
     padding: 7px 14px;
     font-size: 14px;
     font-weight: normal;
+    border-bottom: 1px solid #ffffff;
 }
 
 #drop {
