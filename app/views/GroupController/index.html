@@ -1,0 +1,18 @@
+#{extends 'main.html' /}
+#{set title:'Home of ' + groupId /}
+
+<div id="home">
+    #{if logged}
+    <h1>You are now chatting as ${user.username}
+        | <a href="@{Rooms.leaveAllRooms(groupId)}">Disconnect</a>
+    </h1>
+    #{/if}
+    <h2>Campfire</h2>
+    #{if logged}
+    <a href="@{Rooms.room(groupId, 'welcome')}">Go to rooms</a>
+    #{/if}
+    #{ifnot logged}
+    <a href="@{signin(groupId)}">Sign in</a><br/>
+    <a href="@{register(groupId)}">Register</a>
+    #{/ifnot}
+</div>

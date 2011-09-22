@@ -1,12 +1,12 @@
 #{extends 'main.html' /}
-#{set title:'Sign in' /}
+#{set title:'Registration' /}
 
 <div id="home">
 
-    <h2>Campfire: Registration</h2>
+    <h2>Registration on organization ${groupId}</h2>
 
     <div id="signin">
-        #{form @registration()}
+        #{form @registration(groupId)}
             #{if flash.error}
                 <p class="error">
                     ${flash.error}
@@ -32,18 +32,10 @@
                 <label>Surname</label>
                 <input type="text" name="surname" id="surname" value="${surname}">
             </p>
-            <!--<p>
-                <label>Phone</label>
-                <input type="text" name="phone" id="phone">
-            </p>-->
             <p>
                 <label>Email</label>
                 <input type="text" name="mail" id="mail" value="${mail}">
             </p>
-            <!--<p>
-                <label>Address</label>
-                <input type="text" name="address" id="address">
-            </p>-->
             <p>
                 <label>Avatar</label>
                 <input type="text" name="avatar" id="avatar" value="${avatar}">

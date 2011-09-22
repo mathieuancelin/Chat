@@ -3,29 +3,29 @@
 
 <h1>You are now chatting as ${user.username}
     | <a id="new-chatroom" href="#">New chat room</a>
-    | <a href="@{Application.index()}">Home</a>
-    | <a href="@{leaveAllRooms()}">Disconnect</a>
+    | <a href="@{GroupController.index(groupId)}">Home</a>
+    | <a href="@{leaveAllRooms(groupId)}">Disconnect</a>
 </h1>
 <div id="rooms">
     <h1>Available rooms</h1>
     #{list rooms}
-    <div id="room"><a href="@{room(_.name)}">${_.name}</a></div>
+    <div id="room"><a href="@{room(groupId, _.name)}">${_.name}</a></div>
     #{/list}
     *{
     <h1>Private rooms</h1>
     #{list privateRooms}
     #{if _.privateUser1 != user.mail}
-    <div id="room"><a href="@{Rooms.room(_.name)}">${_.privateUser1()}</a></div>
+    <div id="room"><a href="@{Rooms.room(groupId, _.name)}">${_.privateUser1()}</a></div>
     #{/if}
     #{if _.privateUser2 != user.mail}
-    <div id="room"><a href="@{Rooms.room(_.name)}">${_.privateUser2()}</a></div>
+    <div id="room"><a href="@{Rooms.room(groupId, _.name)}">${_.privateUser2()}</a></div>
     #{/if}
     #{/list}
     }*
     <h1>Available people</h1>
     #{list users}
     #{if _.mail != user.mail}
-    <div id="room"><a href="@{Rooms.newPrivateRoom(user.mail, _.mail)}">${_.username}</a></div>
+    <div id="room"><a href="@{Rooms.newPrivateRoom(groupId, user.mail, _.mail)}">${_.username}</a></div>
     #{/if}
     #{/list}
 </div>
@@ -63,7 +63,7 @@ ${roomTitle}
 </div>
 
 <div id="newMessage">
-    #{form @say(room)}
+    #{form @say(groupId, room)}
     <input type="text" id="message" name="message" autocomplete="off" >
         <input type="submit" value="send" id="send">
     #{/}
@@ -82,8 +82,8 @@ ${roomTitle}
         if (name == "" || name == null) {
             name = "New room";
         }
-        $.post("@{rooms()}", {name: name}, function(evt) {
-            $('#rooms').load("@{room(room)} #rooms", function() {
+        $.post("@{rooms(groupId)}", {name: name}, function(evt) {
+            $('#rooms').load("@{room(groupId, room)} #rooms", function() {
                 focusInput();
             });
         });
@@ -91,7 +91,7 @@ ${roomTitle}
 
     $('#thread-title').click(function() {
         var value = prompt('Title');
-        $.post("@{setTitle(room)}", {value: value}, function(room) {
+        $.post("@{setTitle(groupId, room)}", {value: value}, function(room) {
             $('#thread-title').html(value);
         });
     });
@@ -105,11 +105,11 @@ ${roomTitle}
     }
 
     var refresh = function() {
-        $('#thread').load('@{room(room)} #thread .message', function() {
+        $('#thread').load('@{room(groupId, room)} #thread .message', function() {
             focusInput()
         });
-        $('#rooms').load('@{room(room)} #rooms', function() {});
-        $('#thread-title').load('@{room(room)} #thread-title', function() {});
+        $('#rooms').load('@{room(groupId, room)} #rooms', function() {});
+        $('#thread-title').load('@{room(groupId, room)} #thread-title', function() {});
     }
     $(document).ready( function() {
         scrollDown();

@@ -2,24 +2,31 @@
 # This file defines all application routes (Higher priority routes first)
 # ~~~~
 
-GET     /                                       Application.index
-GET     /signin                                 Application.signin
-GET     /login                                  Application.enter
-GET     /register                               Application.register
-POST    /registration                           Application.registration
-GET     /captcha                                Application.captcha
-POST    /upload                                 Application.upload
+GET     /                                                 Application.index
+GET     /captcha                                          Application.captcha
+POST    /upload                                           Application.upload
+*       /admin                                            module:crud
 
-GET     /rooms/leave                            Rooms.leaveAllRooms
-GET     /rooms/private/{user1}/{user2}          Rooms.newPrivateRoom
-GET     /rooms/{room}                           Rooms.room
-GET     /rooms/{room}/title                     Rooms.getTitle
-POST    /rooms/{room}/title                     Rooms.setTitle
-POST    /rooms/{room}/say                       Rooms.say
-GET     /rooms/{room}/leave                     Rooms.leave
-POST    /rooms                                  Rooms.newChatRoom  
-GET     /rooms                                  Rooms.rooms 
+GET     /{groupId}/index                                  GroupController.index
+GET     /{groupId}/signin                                 GroupController.signin
+#GET    /{groupId}/login                                  GroupController.enter
+GET     /{groupId}/register                               GroupController.register
+POST    /{groupId}/registration                           GroupController.registration
+GET     /{groupId}/login                                  GroupController.enter
+
+GET     /{groupId}/rooms/leave                            Rooms.leaveAllRooms
+GET     /{groupId}/rooms/private/{user1}/{user2}          Rooms.newPrivateRoom
+GET     /{groupId}/rooms/{room}                           Rooms.room
+GET     /{groupId}/rooms/{room}/title                     Rooms.getTitle
+POST    /{groupId}/rooms/{room}/title                     Rooms.setTitle
+POST    /{groupId}/rooms/{room}/say                       Rooms.say
+GET     /{groupId}/rooms/{room}/leave                     Rooms.leave
+POST    /{groupId}/rooms                                  Rooms.newChatRoom  
+GET     /{groupId}/rooms                                  Rooms.rooms 
+
+# Import Secure routes
+*       /                                                 module:secure
 
 # Map static resources from the /app/public folder to the /public path
-GET     /public/                                staticDir:public
+GET     /public/                                          staticDir:public
 

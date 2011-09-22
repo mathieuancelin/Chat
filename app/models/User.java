@@ -1,6 +1,7 @@
 package models;
 
 import javax.persistence.Entity;
+import javax.persistence.ManyToOne;
 import play.data.validation.Email;
 import play.data.validation.Phone;
 import play.data.validation.Required;
@@ -37,6 +38,9 @@ public class User extends Model {
     public String gravatar;
     
     public Boolean connected;
+    
+    @ManyToOne
+    public OrganizationGroup group;
 
     public static User findByEmail(@Required @Email String mail) {
         return User.find("byMail", mail).first();
@@ -44,6 +48,11 @@ public class User extends Model {
     
     public String emailHash() {
         return Codec.hexSHA1(mail);
+    }
+    
+    @Override
+    public String toString() {
+        return username + " (" + name + ", " + surname + ", " + mail + ") connected: " + connected; 
     }
      
 }
