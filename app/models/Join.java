@@ -5,7 +5,7 @@ import javax.persistence.Entity;
 @Entity
 public class Join extends Message {
     
-    public Join(String user) {
-        super(user, user + " join the room.", MessageType.JOIN);
+    public Join(String user, ChatRoom room) {
+        super(user, user + " join the room.", MessageType.JOIN, room);
     }
 }

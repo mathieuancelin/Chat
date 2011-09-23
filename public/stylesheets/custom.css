@@ -1,0 +1,70 @@
+#rooms {
+    padding-top: 50px;
+}
+
+#thread {
+    position: fixed;
+    background: white;
+    padding: 10px;
+    overflow-y: scroll;
+    top: 110px;
+    bottom: 50px;
+    right: 20px;
+    left: 250px
+}
+
+.message {
+    border-bottom: 1px solid #efefef;
+    position: relative;
+    overflow: hidden;
+}
+
+.message h2 {
+    background: #efefef;
+    color: #000;
+    font-size: 12px;
+    font-weight: bold;
+    margin: 0;
+    padding: 5px;
+    position: absolute;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: 100px;
+    text-align: right;
+    border-right: 1px solid #ccc;
+}
+
+.message p {
+    font-size: 12px;
+    padding: 5px;
+    margin: 0 0 0 110px;
+}
+
+.message.you * {
+    background: #FFFFCC;
+}
+
+.message.notice * {
+    background: #D9E7FB;
+}
+
+.message.important * {
+    background: #c00;
+    color: #fff;
+}
+
+.message.notice h2 {
+    visibility: hidden;
+}
+
+.message.notice p {
+    margin: 0;
+    padding-left: 115px;
+}
+
+#newMessage {
+    position: fixed;
+    bottom: 0px;
+    right: 20px;
+}

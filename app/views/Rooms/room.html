@@ -1,99 +1,97 @@
 #{extends 'main.html' /}
 #{set title:'Room "' + room + '"'/}
 
-<h1>You are now chatting as ${user.username} in ${groupId}
-    | <a id="new-chatroom" href="#">New chat room</a>
-    | <a href="@{GroupController.index(groupId)}">Home</a>
-    | <a href="#">Account</a>
-    | <a href="#">Settings</a>
-    | <a href="@{leaveAllRooms(groupId)}">Disconnect</a>
-</h1>
-<div id="rooms">
-    <h1>Available rooms</h1>
-    #{list rooms}
-    <div id="room"><a href="@{room(groupId, _.name)}">${_.name}</a></div>
-    #{/list}
-    *{
-    <h1>Private rooms</h1>
-    #{list privateRooms}
-    #{if _.privateUser1 != user.mail}
-    <div id="room"><a href="@{Rooms.room(groupId, _.name)}">${_.privateUser1()}</a></div>
-    #{/if}
-    #{if _.privateUser2 != user.mail}
-    <div id="room"><a href="@{Rooms.room(groupId, _.name)}">${_.privateUser2()}</a></div>
-    #{/if}
-    #{/list}
-    }*
-    <h1>Available people</h1>
-    #{list users}
-    #{if _.mail != user.mail}
-    <div id="room"><a href="@{Rooms.newPrivateRoom(groupId, user.mail, _.mail)}">${_.username}</a></div>
-    #{/if}
-    #{/list}
+<div class="topbar">
+    <div class="topbar-inner">
+        <div class="container-fluid">
+            <a class="brand" href="@{GroupController.index(groupId)}">${group.name}</a>
+            <ul class="nav">
+                <li><a id="new-chatroom" href="#">New chat room</a></li>
+                <li><a href="#">Account</a></li>
+                <li><a href="#">Settings</a></li>
+                <li><a href="@{leaveAllRooms(groupId)}">Disconnect</a></li>
+            </ul>
+            <p class="pull-right">Logged in as <a href="#">${user.username}</a></p>
+        </div>
+    </div>
 </div>
-#{if room != 'welcome'}
-<!--<div id="thread-title">
-${roomTitle}
-</div>-->
-<div id="thread">
-    #{list events}
-        #{if _.type == models.MessageType.HTML}
+
+<div id="rooms">
+</div>
+    
+<div id="chat" class="container-fluid">
+    <ul class="tabs">
+    #{list rooms}
+        #{if room == _.name}
+        <li class="active">
+        #{/if}
+        #{ifnot room == _.name}
+        <li>
+        #{/ifnot}
+        <a href="@{room(groupId, _.name)}">${_.name}</a></li>
+    #{/list}
+    </ul>
+    <div class="sidebar">
+        <div class="well">
+            <h3>${room}</h3>
+            <div id="thread-title">
+                <p><i>${roomTitle}</i></p>
+                <br/>
+            </div>
+            <div id="who">
+                <span class="label success"><b>Who's here ?</b></span>
+                #{list users}
+                #{if _.mail != user.mail}
+                <div id="room"><a href="@{Rooms.newPrivateRoom(groupId, user.mail, _.mail)}">${_.username}</a></div>
+                #{/if}
+                #{/list}
+            </div>
+            <br/>
+            <div id="files">
+                <span class="label success"><b>Latest files</b></span>
+                <br/><br/><br/>
+                <a href="#" class="btn primary">upload file</a>
+            </div>
+        </div>
+    </div>
+    <div class="content">
+        <div id="thread">
+            #{list events}
+            #{if _.type == models.MessageType.HTML}
             <div class="message ${_.user == user.mail ? 'you' : ''}">
                 <h2>${_.username()}</h2>
                 <p style="text-align: justify">
                     ${_.text.raw()}
                 </p>
             </div>
-        #{/if}
-        #{if _.type == models.MessageType.JOIN}
+            #{/if}
+            #{if _.type == models.MessageType.JOIN}
             <div class="message notice">
                 <h2></h2>
                 <p>
                     ${_.username()} joined the room
                 </p>
             </div>
-        #{/if}
-        #{if _.type == models.MessageType.LEAVE}
+            #{/if}
+            #{if _.type == models.MessageType.LEAVE}
             <div class="message notice">
                 <h2></h2>
                 <p>
                     ${_.username()} left the room
                 </p>
             </div>
-        #{/if}
-    #{/list}
-</div>
-
-<div id="info-panel">
-    <h3>${room}</h3>
-    <div id="thread-title">
-        <p><i>${roomTitle}</i></p>
-        <br/>
-    </div>
-    <div id="who">
-        <div id="title">
-        <b>Who's here ?</b>
-        </div>
-    </div>
-    <br/>
-    <div id="files">
-        <div id="title">
-        <b>Latest files</b>
+            #{/if}
+            #{/list}
         </div>
     </div>
 </div>
 
 <div id="newMessage">
     #{form @say(groupId, room)}
-    <input type="text" id="message" name="message" autocomplete="off" >
-        <input type="submit" value="send" id="send">
+    <input type="text" id="message" name="message" autocomplete="off" class="span11">
+    <input type="submit" value="   send   " id="send">
     #{/}
 </div>
-#{/if}
-
-#{if room == 'welcome'}
-<div id="welcome"><h1>Welcome to Campfire</h1></div>
-#{/if}
 
 <script type="text/javascript" charset="${_response_encoding}">
    
@@ -103,7 +101,7 @@ ${roomTitle}
             name = "New room";
         } else {
             $.post("@{rooms(groupId)}", {name: name}, function(evt) {
-                $('#rooms').load("@{room(groupId, room)} #rooms", function() {
+                $('#chat').load("@{room(groupId, room)} #chat", function() {
                     focusInput();
                 });
             });
@@ -129,7 +127,7 @@ ${roomTitle}
         $('#thread').load('@{room(groupId, room)} #thread .message', function() {
             focusInput()
         });
-        $('#rooms').load('@{room(groupId, room)} #rooms', function() {});
+        //$('#rooms').load('@{room(groupId, room)} #rooms', function() {});
         $('#thread-title').load('@{room(groupId, room)} #thread-title', function() {});
     }
     $(document).ready( function() {

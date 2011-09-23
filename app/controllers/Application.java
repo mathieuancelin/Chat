@@ -2,6 +2,7 @@ package controllers;
 
 import java.io.File;
 import java.util.List;
+import models.ChatRoom;
 import models.OrganizationGroup;
 import play.cache.Cache;
 import play.libs.Files;
@@ -15,6 +16,13 @@ public class Application extends Controller {
     public static void index() {
         List groups = OrganizationGroup.findAll();
         render(groups);
+    }
+    
+    public static void createGroup(String id, String name) {
+        OrganizationGroup.getOrCreateGroup(id, name);
+        ChatRoom room = ChatRoom.getOrCreateRoom(id, "Home", "The home room");
+        room.save();
+        GroupController.index(id);
     }
         
     public static void captcha(String id) {

@@ -5,6 +5,7 @@
 GET     /                                                 Application.index
 GET     /captcha                                          Application.captcha
 POST    /upload                                           Application.upload
+GET     /groups/new/{id}/{name}                           Application.createGroup
 *       /admin                                            module:crud
 
 GET     /{groupId}/index                                  GroupController.index

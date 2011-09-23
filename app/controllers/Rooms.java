@@ -4,13 +4,14 @@ import java.util.ArrayList;
 import java.util.List;
 import models.ChatRoom;
 import models.Message;
+import models.OrganizationGroup;
 import models.User;
 import play.data.validation.Required;
 import play.mvc.*;
 
 public class Rooms extends Controller {
     
-    public static final String WELCOME_ROOM = "welcome";
+    public static final String WELCOME_ROOM = "Home";
     
     public static final String PRIVATE_KEY = "Private-";
     
@@ -35,12 +36,11 @@ public class Rooms extends Controller {
                 .findPrivateRoomsByGroupAndUser(groupId, user);
         List<User> users = User.findByGroupAndConnected(groupId);
         String roomTitle = "";
-        if(!room.equals(WELCOME_ROOM)) {
-            events = ChatRoom.findByGroupAndName(groupId, room).archiveSince(
-                    Long.valueOf(session.get(GroupController.FROM_KEY)));
-            roomTitle = ChatRoom.findByGroupAndName(groupId, room).title;
-        }
-        render(user, groupId, users, privateRooms, events, room, rooms, roomTitle);
+        events = ChatRoom.findByGroupAndName(groupId, room).archiveSince(
+                Long.valueOf(session.get(GroupController.FROM_KEY)));
+        roomTitle = ChatRoom.findByGroupAndName(groupId, room).title;
+        OrganizationGroup group = OrganizationGroup.findByGroupId(groupId);
+        render(user, groupId, group, users, privateRooms, events, room, rooms, roomTitle);
     }
 
     public static void say(@Required String groupId, @Required String room, @Required String message) {

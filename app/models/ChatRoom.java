@@ -10,6 +10,7 @@ import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import play.data.validation.Required;
 import play.db.jpa.Model;
+import utils.CacheUtil;
 
 @Entity
 public class ChatRoom extends Model {
@@ -76,7 +77,7 @@ public class ChatRoom extends Model {
     }
     
     public List<Message> join(User user) {
-        Message join = new Join(user.mail);
+        Message join = new Join(user.mail, this);
         join.save();
         addMessage(join);
         save();
@@ -84,7 +85,7 @@ public class ChatRoom extends Model {
     }
 
     public void leave(User user) {
-        Message leave = new Leave(user.mail);
+        Message leave = new Leave(user.mail, this);
         leave.save();
         addMessage(leave);
         save();
@@ -186,12 +187,12 @@ public class ChatRoom extends Model {
     }
     
     public static ChatRoom findByGroupAndName(String groupId, String n) {
-        return ChatRoom.find("name = ? and "
+        return ChatRoom.find("name = ? and closed = false and "
             + "group.groupId = ?", n, groupId).first();
     }
     
     public static List<ChatRoom> findPublicRoomsByGroup(String groupId) {
-        return ChatRoom.find("priv = false and group.groupId = ?", 
+        return ChatRoom.find("priv = false and closed = false and group.groupId = ?", 
                 groupId).fetch();
     }
     

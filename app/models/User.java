@@ -9,6 +9,8 @@ import play.data.validation.Required;
 import play.data.validation.URL;
 import play.db.jpa.Model;
 import play.libs.Codec;
+import utils.CacheUtil;
+import utils.F.Callable;
 
 @Entity
 public class User extends Model {
@@ -69,8 +71,15 @@ public class User extends Model {
         return u.save();
     }
     
-    public static User findByGroupAndEmail(@Required String groupId, @Required @Email String mail) {
-        return User.find("group.groupId = ? and mail = ?", groupId, mail).first();
+    public static User findByGroupAndEmail(final @Required String groupId, 
+            final @Required @Email String mail) {
+        String key = CacheUtil.key("user.", groupId, mail);
+        User user = CacheUtil.get(key, User.class, new Callable<User>() {
+            public User apply() {
+                return User.find("group.groupId = ? and mail = ?", groupId, mail).first();
+            }
+        });
+        return user;
     }
     
     public static List<User> findByGroupAndConnected(String groupId) {
@@ -78,9 +87,15 @@ public class User extends Model {
     }
     
     public static User findByGroupAndMailAndPassword(
-            String groupId, String mail, String password) {
-        return User.find("group.groupId = ? and mail = ? and password = ?", 
-                groupId, mail, Codec.hexSHA1(password)).first();
+            final String groupId, final String mail, final String password) {
+        String key = CacheUtil.key("user.", groupId, mail, password);
+        User user = CacheUtil.get(key, User.class, new Callable<User>() {
+            public User apply() {
+                return User.find("group.groupId = ? and mail = ? and password = ?", 
+                    groupId, mail, Codec.hexSHA1(password)).first();
+            }
+        });
+        return user;
     }
     
     public String emailHash() {

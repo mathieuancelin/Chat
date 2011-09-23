@@ -24,13 +24,13 @@ public class Message extends Model {
     @ManyToOne
     public ChatRoom room;
 
-    public Message(String user, String text, MessageType type) {
-        this.user = user;
-        this.text = text.replace("\n", "<br/>").replace("\r", "<br/>");
-        this.type = type;
-        this.username = User.findByGroupAndEmail(room.group.groupId, user).username;
-        this.timestamp = System.currentTimeMillis();
-    }
+//    public Message(String user, String text, MessageType type) {
+//        this.user = user;
+//        this.text = text.replace("\n", "<br/>").replace("\r", "<br/>");
+//        this.type = type;
+//        this.username = User.findByGroupAndEmail(room.group.groupId, user).username;
+//        this.timestamp = System.currentTimeMillis();
+//    }
     
     public Message(String user, String text, MessageType type, ChatRoom room) {
         this.user = user;
@@ -41,13 +41,13 @@ public class Message extends Model {
         this.timestamp = System.currentTimeMillis();
     }
     
-    public Message(String user, String text) {
-        this.user = user;
-        this.text = text.replace("\n", "<br/>").replace("\r", "<br/>");
-        this.type = MessageType.HTML;
-        this.username = User.findByGroupAndEmail(room.group.groupId, user).username;
-        this.timestamp = System.currentTimeMillis();
-    }
+//    public Message(String user, String text) {
+//        this.user = user;
+//        this.text = text.replace("\n", "<br/>").replace("\r", "<br/>");
+//        this.type = MessageType.HTML;
+//        this.username = User.findByGroupAndEmail(room.group.groupId, user).username;
+//        this.timestamp = System.currentTimeMillis();
+//    }
     
     public Message(String user, String text, ChatRoom room) {
         this.user = user;

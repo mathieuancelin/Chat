@@ -41,7 +41,10 @@ public class OrganizationGroup extends Model {
         group.desc = description;
         group.users = new ArrayList<User>();
         group.rooms = new ArrayList<ChatRoom>();
-        return group;
+//        group = group.save();
+//        ChatRoom room = ChatRoom.getOrCreateRoom(groupId, "Home", "The home room");
+//        group.rooms.add(room);
+        return group.save();
     }
     
     public static OrganizationGroup getOrCreateGroup(String groupId, String name) {
