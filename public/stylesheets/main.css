@@ -87,19 +87,20 @@ h1 a {
 
 #thread {
     position: fixed;
-    top: 100px;
-    left: 250px;
+    top: 50px;
+    left: 20%;
     right: 14px;
     bottom: 100px;
     background: white;
     padding: 10px;
     overflow-y: scroll;
+    width: 60%;
 }
 
 #welcome {
     position: fixed;
     top: 50px;
-    left: 250px;
+    left: 20%;
     right: 14px;
     bottom: 100px;
     background: white;
@@ -107,13 +108,14 @@ h1 a {
 }
 
 #thread-title {
-    position: fixed;
+    /**position: fixed;
     top: 50px;
-    left: 250px;
+    left: 20%;
     right: 14px;
     height: 20px;
     background: white;
     padding: 10px;
+    width: 60%;**/
 }
 
 #rooms {
@@ -125,7 +127,30 @@ h1 a {
     background: white;
     padding: 0px;
     overflow-y: scroll;
-    width: 220px
+    width: 18%;
+}
+
+#info-panel {
+    background: #ddd;
+    position: fixed;
+    top: 50px;
+    right: 14px;
+    bottom: 100px;
+    padding-left: 14px;
+    padding-right: 12px;
+    width: 15%;
+}
+
+#info-panel h3 {
+    background: #f4f2f2;
+}
+
+#files #title {
+    background: #f4f2f2;
+}
+
+#who #title {
+    background: #f4f2f2;
 }
 
 .message {
@@ -184,6 +209,7 @@ h1 a {
     right: 14px;
     bottom: 30px;
     height: 60px;
+    width: 100%;
 }
 
 #newMessage #message {

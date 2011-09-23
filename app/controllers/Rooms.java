@@ -3,6 +3,7 @@ package controllers;
 import java.util.ArrayList;
 import java.util.List;
 import models.ChatRoom;
+import models.Message;
 import models.User;
 import play.data.validation.Required;
 import play.mvc.*;
@@ -11,105 +12,107 @@ public class Rooms extends Controller {
     
     public static final String WELCOME_ROOM = "welcome";
     
-    public static final String PRIVATE_KEY = "privroom-";
+    public static final String PRIVATE_KEY = "Private-";
     
-    public static void room(@Required String groupId, @Required String room) {
+    public static final String CHOOSE_VALID_USER = "Please choose a valid user.";
+    
+    private static void errorValidUser() {
         if (!session.contains(GroupController.USER_KEY)) {
-            flash.error("Please choose a valid user.");
+            flash.error(CHOOSE_VALID_USER);
             Application.index();
         }
-        User user = User.findByEmail(session.get(GroupController.USER_KEY));
+    }
+    
+    public static void room(@Required String groupId, @Required String room) {
+        errorValidUser();
+        User user = User.findByGroupAndEmail(groupId, session.get(GroupController.USER_KEY));
         if (!user.group.groupId.equals(groupId)) {
             room(user.group.groupId, WELCOME_ROOM);
         }
-        List events = new ArrayList();
-        List<ChatRoom> rooms = ChatRoom.find("priv = false and group.groupId = ?", groupId).fetch();
+        List<Message> events = new ArrayList<Message>();
+        List<ChatRoom> rooms = ChatRoom.findPublicRoomsByGroup(groupId);
         List<ChatRoom> privateRooms = ChatRoom
-                .find("group.groupId = ? and priv = true and privateUser1 = ? or privateUser2 = ?", 
-                groupId, user.mail, user.mail).fetch();
+                .findPrivateRoomsByGroupAndUser(groupId, user);
+        List<User> users = User.findByGroupAndConnected(groupId);
         String roomTitle = "";
-        if(!room.equals("welcome")) {
-            events = ChatRoom.get(groupId, room).archiveSince(
+        if(!room.equals(WELCOME_ROOM)) {
+            events = ChatRoom.findByGroupAndName(groupId, room).archiveSince(
                     Long.valueOf(session.get(GroupController.FROM_KEY)));
-            roomTitle = ChatRoom.get(groupId, room).title;
+            roomTitle = ChatRoom.findByGroupAndName(groupId, room).title;
         }
-        List users = User.find("connected = true and group.groupId = ?", groupId).fetch();
         render(user, groupId, users, privateRooms, events, room, rooms, roomTitle);
     }
 
     public static void say(@Required String groupId, @Required String room, @Required String message) {
-        if (!session.contains(GroupController.USER_KEY)) {
-            flash.error("Please choose a valid user.");
-            Application.index();
-        }
-        User user = User.findByEmail(session.get(GroupController.USER_KEY));
-        ChatRoom.get(groupId, room).say(user, message);
+        errorValidUser();
+        User user = User.findByGroupAndEmail(groupId, session.get(GroupController.USER_KEY));
+        ChatRoom.findByGroupAndName(groupId, room).say(user, message);
         room(groupId, room);
     }
     
     public static void leaveAllRooms(@Required String groupId) {
-        if (!session.contains(GroupController.USER_KEY)) {
-            flash.error("Please choose a valid user.");
-            Application.index();
-        }
-        User user = User.findByEmail(session.get(GroupController.USER_KEY));
-        for (Object obj : ChatRoom.all().fetch()) {
+        errorValidUser();
+        User user = User.findByGroupAndEmail(groupId, session.get(GroupController.USER_KEY));
+        // TODO : not great, need to handle join and leave
+        for (Object obj : ChatRoom.findPublicRoomsByGroup(groupId)) {
             ChatRoom chat = ((ChatRoom) obj);
             chat.leave(user);
         }
-        user.connected = false;
-        user.save();
+        user = user.disconnect();
         session.clear();
         GroupController.index(groupId);
     }
     
     public static void leave(@Required String groupId, String room) {
-        if (!session.contains(GroupController.USER_KEY)) {
-            flash.error("Please choose a valid user.");
-            Application.index();
-        }
-        User user = User.findByEmail(session.get(GroupController.USER_KEY));
-        ChatRoom.get(groupId, room).leave(user);
+        errorValidUser();
+        User user = User.findByGroupAndEmail(groupId, session.get(GroupController.USER_KEY));
+        ChatRoom.findByGroupAndName(groupId, room).leave(user);
         session.clear();
         GroupController.index(groupId);
     }
     
     public static void newPrivateRoom(@Required String groupId, @Required String user1, @Required String user2) {
-        User u1 = User.findByEmail(user1);
-        User u2 = User.findByEmail(user2);
-        String value = "Private-" + u1.username + "-" + u2.username;
-        ChatRoom room = ChatRoom.newPrivateRoom(groupId, value, 
+        User u1 = User.findByGroupAndEmail(groupId, user1);
+        User u2 = User.findByGroupAndEmail(groupId, user2);
+        String value = PRIVATE_KEY + u1.username + "-" + u2.username;
+        ChatRoom room = ChatRoom.getOrCreatePrivateRoom(groupId, value, 
                 "Private conversation between " + value, user1, user2);
         room.save();
         room(groupId, room.name);
     }
     
     public static void newChatRoom(@Required String groupId, @Required String name) {
-        System.out.println("newwwww");
-        String value = "New room";
+        String value = ChatRoom.DEFAULT_TITLE;
         if (name != null && !name.equals("")) {
             value = name;
         }
-        ChatRoom room = ChatRoom.newRoom(groupId, value, "Thread title (click to change)");
+        ChatRoom room = ChatRoom.getOrCreateRoom(groupId, value, ChatRoom.DEFAULT_TITLE);
         room.save();
         ok();
     }
     
     public static void rooms(@Required String groupId) {
-        List rooms = ChatRoom.findAll();
+        List<ChatRoom> rooms = ChatRoom.findAll();
         render(rooms);
     }
 
     public static void setTitle(@Required String groupId, @Required String room, @Required String value) {
-        ChatRoom r = ChatRoom.get(groupId, room);
-        r.title = value;
-        r.save();
-        ok();
+        ChatRoom r = ChatRoom.findByGroupAndName(groupId, room);
+        if (r != null) {
+            r.title = value;
+            r.save();
+            ok();
+        } else {
+            error();
+        }
     }
 
     public static void getTitle(@Required String groupId, @Required String room) {
-        String value = ChatRoom.get(groupId, room).title;
-        renderText(value);
+        ChatRoom r = ChatRoom.findByGroupAndName(groupId, room);
+        if (r != null) {
+            renderText(r.title);
+        } else {
+            error();
+        }
     }
-
 }

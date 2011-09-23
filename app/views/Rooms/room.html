@@ -1,9 +1,11 @@
 #{extends 'main.html' /}
 #{set title:'Room "' + room + '"'/}
 
-<h1>You are now chatting as ${user.username}
+<h1>You are now chatting as ${user.username} in ${groupId}
     | <a id="new-chatroom" href="#">New chat room</a>
     | <a href="@{GroupController.index(groupId)}">Home</a>
+    | <a href="#">Account</a>
+    | <a href="#">Settings</a>
     | <a href="@{leaveAllRooms(groupId)}">Disconnect</a>
 </h1>
 <div id="rooms">
@@ -30,9 +32,9 @@
     #{/list}
 </div>
 #{if room != 'welcome'}
-<div id="thread-title">
+<!--<div id="thread-title">
 ${roomTitle}
-</div>
+</div>-->
 <div id="thread">
     #{list events}
         #{if _.type == models.MessageType.HTML}
@@ -62,6 +64,25 @@ ${roomTitle}
     #{/list}
 </div>
 
+<div id="info-panel">
+    <h3>${room}</h3>
+    <div id="thread-title">
+        <p><i>${roomTitle}</i></p>
+        <br/>
+    </div>
+    <div id="who">
+        <div id="title">
+        <b>Who's here ?</b>
+        </div>
+    </div>
+    <br/>
+    <div id="files">
+        <div id="title">
+        <b>Latest files</b>
+        </div>
+    </div>
+</div>
+
 <div id="newMessage">
     #{form @say(groupId, room)}
     <input type="text" id="message" name="message" autocomplete="off" >
@@ -69,7 +90,6 @@ ${roomTitle}
     #{/}
 </div>
 #{/if}
-
 
 #{if room == 'welcome'}
 <div id="welcome"><h1>Welcome to Campfire</h1></div>
@@ -81,12 +101,13 @@ ${roomTitle}
         var name = prompt('Room name');
         if (name == "" || name == null) {
             name = "New room";
-        }
-        $.post("@{rooms(groupId)}", {name: name}, function(evt) {
-            $('#rooms').load("@{room(groupId, room)} #rooms", function() {
-                focusInput();
+        } else {
+            $.post("@{rooms(groupId)}", {name: name}, function(evt) {
+                $('#rooms').load("@{room(groupId, room)} #rooms", function() {
+                    focusInput();
+                });
             });
-        });
+        }
     });
 
     $('#thread-title').click(function() {

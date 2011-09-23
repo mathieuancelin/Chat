@@ -30,8 +30,12 @@ public class OrganizationGroup extends Model {
     
     public OrganizationGroup() {}
     
-    public static OrganizationGroup newGroup(String groupId, String name, String description) {
-        OrganizationGroup group = new OrganizationGroup();
+    public static OrganizationGroup getOrCreateGroup(String groupId, String name, String description) {
+        OrganizationGroup group = OrganizationGroup.findByGroupId(groupId);
+        if (group != null) {
+            return group;
+        }
+        group = new OrganizationGroup();
         group.name = name;
         group.groupId = groupId;
         group.desc = description;
@@ -40,8 +44,8 @@ public class OrganizationGroup extends Model {
         return group;
     }
     
-    public static OrganizationGroup newGroup(String groupId, String name) {
-        return newGroup(groupId, name, "");
+    public static OrganizationGroup getOrCreateGroup(String groupId, String name) {
+        return getOrCreateGroup(groupId, name, "");
     }
   
     public static OrganizationGroup findByGroupId(String id) {

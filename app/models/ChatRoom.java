@@ -1,10 +1,10 @@
 package models;
 
 import api.MessageHandler;
-import bots.ImagesBot;
-import bots.URLBot;
-import java.util.*;
+import bots.BotMaster;
 
+import java.util.ArrayList;
+import java.util.List;
 import javax.persistence.Entity;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
@@ -14,16 +14,12 @@ import play.db.jpa.Model;
 @Entity
 public class ChatRoom extends Model {
 
-    public static final List<MessageHandler> messagesBots = new ArrayList<MessageHandler>();
-
     public static final int LASTS = 20;
-
-    static {
-        messagesBots.clear();
-        messagesBots.add(URLBot.INSTANCE);
-        messagesBots.add(ImagesBot.INSTANCE);
-    }
     
+    public static final String DEFAULT_NAME = "New room";
+    
+    public static final String DEFAULT_TITLE = "Thread title (click to change)";
+
     @Required 
     public String name;
     
@@ -37,6 +33,7 @@ public class ChatRoom extends Model {
     
     public Boolean closed = new Boolean(false);
     
+    @Required
     public Boolean priv;
     
     public String privateUser1;
@@ -44,11 +41,21 @@ public class ChatRoom extends Model {
     public String privateUser2;
 
     public String privateUser1() {
-        return User.findByEmail(privateUser1).username;
+        User u = User.findByGroupAndEmail(group.groupId, privateUser1);
+        if (u != null) {
+            return u.username;
+        } else {
+            return "unknown (error)";
+        }
     }
     
     public String privateUser2() {
-        return User.findByEmail(privateUser2).username;
+        User u = User.findByGroupAndEmail(group.groupId, privateUser2);
+        if (u != null) {
+            return u.username;
+        } else {
+            return "unknown (error)";
+        }
     }
     
     @Override
@@ -87,8 +94,7 @@ public class ChatRoom extends Model {
         if(text == null || text.trim().equals("")) {
             return;
         }
-        Message mess = new Message(user.mail, text);
-        mess.room = this;
+        Message mess = new Message(user.mail, text, this);
         mess.save();
         addMessage(mess);
         save();
@@ -99,7 +105,7 @@ public class ChatRoom extends Model {
     }
 
     public List<Message> archiveSince(Long timestamp) {
-        return Message.find("room.id = ? and timestamp >= ?", this.id, timestamp).fetch();
+        return Message.findByRoomFrom(id, timestamp);
     }
     
     public List<Message> archiveLast100() {
@@ -116,47 +122,53 @@ public class ChatRoom extends Model {
             messages = new ArrayList<Message>();
         }
         Message m = message;
-        for (MessageHandler handler : messagesBots) {
+        for (MessageHandler handler : BotMaster.messagesBots) {
             m = handler.handleChatMessage(m, null, this);
         }
         messages.add(m);
 
     }
     
-    public static ChatRoom newRoom(String groupId, String name, String title) {
-        ChatRoom room = ChatRoom.get(groupId, name);
+    public static ChatRoom getOrCreateRoom(
+            String groupId, String name, String title) {
+        ChatRoom room = ChatRoom.findByGroupAndName(groupId, name);
         if ( room != null) {
             return room;
         }
-        room = new ChatRoom();
-        room.title = title;
-        room.name = name;
-        room.priv = false;
-        room = room.save();
-        OrganizationGroup group = OrganizationGroup.findByGroupId(groupId);
-        group.rooms.add(room);
-        group.save();
-        room.group = group;
-        room.save();
-        for (MessageHandler handler : messagesBots) {
+        room = createRoom(title, name, false, null, null, groupId);
+        for (MessageHandler handler : BotMaster.messagesBots) {
            handler.registerChatRoom(name);
         }
         return room;
     }
     
-    public static ChatRoom newPrivateRoom(String groupId, String name, String title, String user1, String user2) {
-        ChatRoom room1 = ChatRoom.find("privateUser1 = ? and privateUser2 = ? and group.groupId = ?", user1, user2, groupId).first();
-        ChatRoom room2 = ChatRoom.find("privateUser1 = ? and privateUser2 = ? and group.groupId = ?", user2, user1, groupId).first();
+    public static ChatRoom getOrCreatePrivateRoom(
+            String groupId, String name, 
+            String title, String user1, String user2) {
+        ChatRoom room1 = ChatRoom.
+                findByPrivate1AndPrivate2AndGroup(user1, user2, groupId);
+        ChatRoom room2 = ChatRoom.
+                findByPrivate1AndPrivate2AndGroup(user2, user1, groupId);
         if ( room1 != null) {
             return room1;
         }
         if ( room2 != null) {
             return room2;
         }
+        ChatRoom room = createRoom(title, name, true, user1, user2, groupId);
+        for (MessageHandler handler : BotMaster.messagesBots) {
+           handler.registerChatRoom(name);
+        }
+        return room;
+    }
+    
+    private static ChatRoom createRoom(
+            String title, String name, boolean priv, 
+            String user1, String user2, String groupId) {
         ChatRoom room = new ChatRoom();
         room.title = title;
         room.name = name;
-        room.priv = true;
+        room.priv = priv;
         room.privateUser1 = user1;
         room.privateUser2 = user2;
         room = room.save();
@@ -164,16 +176,31 @@ public class ChatRoom extends Model {
         group.rooms.add(room);
         group.save();
         room.group = group;        
-        room.save();
-        for (MessageHandler handler : messagesBots) {
-           handler.registerChatRoom(name);
-        }
-        return room;
+        return room.save();
     }
     
+    public static ChatRoom findByPrivate1AndPrivate2AndGroup(
+            String user1, String user2, String groupId) {
+        return ChatRoom.find("privateUser1 = ? and privateUser2 = ? "
+            + "and group.groupId = ?", user1, user2, groupId).first();
+    }
     
-    public static ChatRoom get(String groupId, String n) {
-        return ChatRoom.find("name = ? and group.groupId = ?", n, groupId).first();
+    public static ChatRoom findByGroupAndName(String groupId, String n) {
+        return ChatRoom.find("name = ? and "
+            + "group.groupId = ?", n, groupId).first();
+    }
+    
+    public static List<ChatRoom> findPublicRoomsByGroup(String groupId) {
+        return ChatRoom.find("priv = false and group.groupId = ?", 
+                groupId).fetch();
+    }
+    
+    public static List<ChatRoom> findPrivateRoomsByGroupAndUser(
+            String groupId, User user) {
+        return ChatRoom
+            .find("group.groupId = ? and priv = true "
+            + "and privateUser1 = ? or privateUser2 = ?", 
+            groupId, user.mail, user.mail).fetch();
     }
 }
 

@@ -21,7 +21,7 @@ public class GroupController extends Controller {
         User user = null;
         if (session.contains(USER_KEY)) {
             logged = true;
-            user = User.findByEmail(session.get(USER_KEY));
+            user = User.findByGroupAndEmail(groupId, session.get(USER_KEY));
             if (user == null) {
                 logged = false;
                 session.clear();
@@ -41,7 +41,7 @@ public class GroupController extends Controller {
             logged = true;
         }
         if (logged) {
-            User user = User.findByEmail(session.get(USER_KEY));
+            User user = User.findByGroupAndEmail(groupId, session.get(USER_KEY));
             Rooms.room(groupId, Rooms.WELCOME_ROOM);
         }
         render(logged, groupId);
@@ -88,52 +88,38 @@ public class GroupController extends Controller {
             flash.error(validation.errorsMap().toString());
             signin(groupId);
         }
-        User existing = User.find("byMail", mail).first();
+        User existing = User.findByGroupAndEmail(groupId, mail);
         if (existing != null) {
             flash.error("Email address already exists");
             randomID = Codec.UUID();
             render("GroupController/register.html", randomID, username, 
                     password, name, surname, mail, avatar, groupId);
         }
-        User u = new User();
-        u.username = username;
-        u.name = name;
-        u.surname = surname;
-        u.phone = phone;
-        u.mail = mail;
-        u.address = address;
-        u.avatarUrl = avatar;
-        u.gravatar = gravatar;
-        u.password = Codec.hexSHA1(password);
-        u.connected = false;
-        u = u.save();
-        OrganizationGroup group = OrganizationGroup.findByGroupId(groupId);
-        group.users.add(u);
-        group.save();
-        u.group = group;
-        u.save();
+        User.createUser(username, name, surname, 
+                phone, mail, address, avatar, gravatar, password, groupId);
         signin(groupId);
     }
     
-    public static void enter(@Required String groupId, @Required @Email String user, @Required String password) {        
+    public static void enter(@Required String groupId, 
+            @Required @Email String user, @Required String password) {        
         if(validation.hasErrors()) {
-            flash.error("Please choose a nick name and the channel.");
+            flash.error("Bad email address");
             index(groupId);
         }
-        User u = User.find("byMailLikeAndPassword", user, Codec.hexSHA1(password)).first();
+        User u = User.findByGroupAndMailAndPassword(groupId, user, password);
         if (u == null) {
             flash.error("Please choose a valid user.");
             index(groupId);
         }
         session.put(USER_KEY, u.mail);
-        for (Object obj : ChatRoom.all().fetch()) {
+        // TODO : not great, need to handle join and leave
+        for (Object obj : ChatRoom.findPublicRoomsByGroup(groupId)) {
             ChatRoom chat = ((ChatRoom) obj);
             if (!chat.closed) {
                 chat.join(u);
             }
         }
-        u.connected = true;
-        u.save();
+        u = u.connect();
         Rooms.room(groupId, Rooms.WELCOME_ROOM);
     }
 }
