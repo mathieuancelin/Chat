@@ -9,7 +9,7 @@
     #{/if}
     <h2>Campfire</h2>
     #{if logged}
-    <a href="@{Rooms.room(groupId, 'welcome')}">Go to rooms</a>
+    <a href="@{Rooms.room(groupId, 'Home')}">Go to rooms</a>
     #{/if}
     #{ifnot logged}
     <a href="@{signin(groupId)}">Sign in</a><br/>

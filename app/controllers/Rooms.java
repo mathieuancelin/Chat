@@ -66,7 +66,7 @@ public class Rooms extends Controller {
         }
         ChatRoom room = ChatRoom.findByGroupAndName(groupId, WELCOME_ROOM);
         room.leave(user);
-        user = user.disconnect();
+        user = User.disconnect(user);
         session.clear();
         GroupController.index(groupId);
     }

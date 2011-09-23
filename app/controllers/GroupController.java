@@ -120,7 +120,7 @@ public class GroupController extends Controller {
 //        }
         //ChatRoom room = ChatRoom.findByGroupAndName(groupId, Rooms.WELCOME_ROOM);
         //room.leave(u);
-        u = u.connect();
+        u = User.connect(u);
         Rooms.room(groupId, Rooms.WELCOME_ROOM);
     }
 }

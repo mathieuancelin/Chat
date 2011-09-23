@@ -110,13 +110,13 @@ public class User extends Model {
                 + ", " + mail + ") connected: " + connected; 
     }
     
-    public User disconnect() {
-        this.connected = false;
-        return this.save();
+    public static User disconnect(User user) {
+        user.connected = false;
+        return user.save();
     } 
     
-    public User connect() {
-        this.connected = true;
-        return this.save();
+    public static User connect(User user) {
+        user.connected = true;
+        return user.save();
     } 
 }
