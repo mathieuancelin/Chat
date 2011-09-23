@@ -6,11 +6,11 @@ import bots.BotMaster;
 import java.util.ArrayList;
 import java.util.List;
 import javax.persistence.Entity;
+import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import play.data.validation.Required;
 import play.db.jpa.Model;
-import utils.CacheUtil;
 
 @Entity
 public class ChatRoom extends Model {
@@ -40,6 +40,9 @@ public class ChatRoom extends Model {
     public String privateUser1;
     
     public String privateUser2;
+        
+    @ManyToMany
+    public List<User> connectedUsers;
 
     public String privateUser1() {
         User u = User.findByGroupAndEmail(group.groupId, privateUser1);
@@ -80,6 +83,7 @@ public class ChatRoom extends Model {
         Message join = new Join(user.mail, this);
         join.save();
         addMessage(join);
+        connectedUsers.add(user);
         save();
         return messages;
     }
@@ -88,6 +92,7 @@ public class ChatRoom extends Model {
         Message leave = new Leave(user.mail, this);
         leave.save();
         addMessage(leave);
+        connectedUsers.remove(user);
         save();
     }
 
@@ -172,6 +177,7 @@ public class ChatRoom extends Model {
         room.priv = priv;
         room.privateUser1 = user1;
         room.privateUser2 = user2;
+        room.connectedUsers = new ArrayList<User>();
         room = room.save();
         OrganizationGroup group = OrganizationGroup.findByGroupId(groupId);
         group.rooms.add(room);

@@ -1,7 +1,9 @@
 package models;
 
+import java.util.ArrayList;
 import java.util.List;
 import javax.persistence.Entity;
+import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
 import play.data.validation.Email;
 import play.data.validation.Phone;
@@ -44,10 +46,9 @@ public class User extends Model {
     
     @ManyToOne
     public OrganizationGroup group;
-
-//    public static User findByEmail(@Required @Email String mail) {
-//        return User.find("byMail", mail).first();
-//    }
+    
+    @ManyToMany
+    public List<ChatRoom> connectedRooms;
     
     public static User createUser(String username, String name, String surname,
             String phone, String mail, String address, String avatar,
@@ -63,6 +64,7 @@ public class User extends Model {
         u.gravatar = gravatar;
         u.password = Codec.hexSHA1(password);
         u.connected = false;
+        u.connectedRooms = new ArrayList<ChatRoom>();
         u = u.save();
         OrganizationGroup group = OrganizationGroup.findByGroupId(groupId);
         group.users.add(u);

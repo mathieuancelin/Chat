@@ -34,12 +34,18 @@ public class Rooms extends Controller {
         List<ChatRoom> rooms = ChatRoom.findPublicRoomsByGroup(groupId);
         List<ChatRoom> privateRooms = ChatRoom
                 .findPrivateRoomsByGroupAndUser(groupId, user);
-        List<User> users = User.findByGroupAndConnected(groupId);
+        ChatRoom r = ChatRoom.findByGroupAndName(groupId, room);
+        List<User> users = r.connectedUsers;//User.findByGroupAndConnected(groupId);
         String roomTitle = "";
         events = ChatRoom.findByGroupAndName(groupId, room).archiveSince(
                 Long.valueOf(session.get(GroupController.FROM_KEY)));
         roomTitle = ChatRoom.findByGroupAndName(groupId, room).title;
         OrganizationGroup group = OrganizationGroup.findByGroupId(groupId);
+        if (r != null) {
+            if (!r.connectedUsers.contains(user)) {
+                r.join(user);
+            }
+        }
         render(user, groupId, group, users, privateRooms, events, room, rooms, roomTitle);
     }
 
@@ -53,11 +59,13 @@ public class Rooms extends Controller {
     public static void leaveAllRooms(@Required String groupId) {
         errorValidUser();
         User user = User.findByGroupAndEmail(groupId, session.get(GroupController.USER_KEY));
-        // TODO : not great, need to handle join and leave
-        for (Object obj : ChatRoom.findPublicRoomsByGroup(groupId)) {
-            ChatRoom chat = ((ChatRoom) obj);
-            chat.leave(user);
+        for (ChatRoom chat : ChatRoom.findPublicRoomsByGroup(groupId)) {
+            if (chat.connectedUsers.contains(user)) {
+                chat.leave(user);
+            }
         }
+        ChatRoom room = ChatRoom.findByGroupAndName(groupId, WELCOME_ROOM);
+        room.leave(user);
         user = user.disconnect();
         session.clear();
         GroupController.index(groupId);
@@ -68,7 +76,7 @@ public class Rooms extends Controller {
         User user = User.findByGroupAndEmail(groupId, session.get(GroupController.USER_KEY));
         ChatRoom.findByGroupAndName(groupId, room).leave(user);
         session.clear();
-        GroupController.index(groupId);
+        room(groupId, WELCOME_ROOM);
     }
     
     public static void newPrivateRoom(@Required String groupId, @Required String user1, @Required String user2) {

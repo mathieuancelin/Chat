@@ -1,7 +1,6 @@
 package controllers;
 
 import models.ChatRoom;
-import models.OrganizationGroup;
 import models.User;
 import play.cache.Cache;
 import play.data.validation.Email;
@@ -113,12 +112,14 @@ public class GroupController extends Controller {
         }
         session.put(USER_KEY, u.mail);
         // TODO : not great, need to handle join and leave
-        for (Object obj : ChatRoom.findPublicRoomsByGroup(groupId)) {
-            ChatRoom chat = ((ChatRoom) obj);
-            if (!chat.closed) {
-                chat.join(u);
-            }
-        }
+//        for (Object obj : ChatRoom.findPublicRoomsByGroup(groupId)) {
+//            ChatRoom chat = ((ChatRoom) obj);
+//            if (!chat.closed) {
+//                chat.join(u);
+//            }
+//        }
+        //ChatRoom room = ChatRoom.findByGroupAndName(groupId, Rooms.WELCOME_ROOM);
+        //room.leave(u);
         u = u.connect();
         Rooms.room(groupId, Rooms.WELCOME_ROOM);
     }
