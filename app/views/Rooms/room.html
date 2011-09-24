@@ -90,13 +90,24 @@
 </div>
 
 <div id="newMessage">
-    #{form @say(groupId, room)}
     <input type="text" id="message" name="message" autocomplete="off" class="span11">
-    <input type="submit" value="   send   " id="send">
-    #{/}
+    <a href="#" class="btn success" id="send">   send   </a>
 </div>
 
 <script type="text/javascript" charset="${_response_encoding}">
+    
+    $('#send').click(function(e) {
+        var message = $('#message').val();
+        $('#message').val('');
+        $.post("@{say(groupId, room)}", {message: message});
+    });
+    
+    $('#message').keypress(function(e) {
+        if(e.charCode == 13 || e.keyCode == 13) {
+            $('#send').click();
+            e.preventDefault();
+        }
+    })
    
     $('#new-chatroom').click(function() {
         var name = prompt('Room name');
