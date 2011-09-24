@@ -64,8 +64,7 @@ public class Rooms extends Controller {
                 chat.leave(user);
             }
         }
-        ChatRoom room = ChatRoom.findByGroupAndName(groupId, WELCOME_ROOM);
-        room.leave(user);
+        user = user.merge();
         user = User.disconnect(user);
         session.clear();
         GroupController.index(groupId);
@@ -75,7 +74,6 @@ public class Rooms extends Controller {
         errorValidUser();
         User user = User.findByGroupAndEmail(groupId, session.get(GroupController.USER_KEY));
         ChatRoom.findByGroupAndName(groupId, room).leave(user);
-        session.clear();
         room(groupId, WELCOME_ROOM);
     }
     
