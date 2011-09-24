@@ -15,7 +15,8 @@ GET     /{groupId}/register                               GroupController.regist
 POST    /{groupId}/registration                           GroupController.registration
 GET     /{groupId}/login                                  GroupController.enter
 
-GET     /{groupId}/rooms/leave                            Rooms.leaveAllRooms
+POST     /{groupId}/rooms/unload                          Rooms.leaveAllRooms
+GET     /{groupId}/rooms/leave                            Rooms.leaveAllRoomsAndDisconnect
 GET     /{groupId}/rooms/private/{user1}/{user2}          Rooms.newPrivateRoom
 GET     /{groupId}/rooms/{room}                           Rooms.room
 GET     /{groupId}/rooms/{room}/title                     Rooms.getTitle

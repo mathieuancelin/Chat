@@ -7,8 +7,8 @@
             <a class="brand" href="@{GroupController.index(groupId)}">${group.name}</a>
             <ul class="nav">
                 <li><a id="new-chatroom" href="#">New chat room</a></li>
-                <!--<li><a href="#">Settings</a></li>-->
-                <li><a href="@{leaveAllRooms(groupId)}">Disconnect</a></li>
+                <li><a href="#">Logs</a></li>
+                <li><a href="@{leaveAllRoomsAndDisconnect(groupId)}">Disconnect</a></li>
             </ul>
             <p class="pull-right">Logged in as <a href="#">${user.name} ${user.surname} (${user.username})</a></p>
         </div>
@@ -146,6 +146,9 @@
         $('#who').load('@{room(groupId, room)} #who #room', function() {});
         $('#thread-title').load('@{room(groupId, room)} #thread-title', function() {});
     }
+    $(window).unload(function() {
+        $.post("@{Rooms.leaveAllRooms(groupId)}");
+    });
     $(document).ready( function() {
         scrollDown();
         focusInput();

@@ -56,7 +56,7 @@ public class Rooms extends Controller {
         room(groupId, room);
     }
     
-    public static void leaveAllRooms(@Required String groupId) {
+    public static void leaveAllRoomsAndDisconnect(@Required String groupId) {
         errorValidUser();
         User user = User.findByGroupAndEmail(groupId, session.get(GroupController.USER_KEY));
         for (ChatRoom chat : ChatRoom.findPublicRoomsByGroup(groupId)) {
@@ -67,6 +67,19 @@ public class Rooms extends Controller {
         user = user.merge();
         user = User.disconnect(user);
         session.clear();
+        GroupController.index(groupId);
+    }
+    
+    public static void leaveAllRooms(@Required String groupId) {
+        errorValidUser();
+        User user = User.findByGroupAndEmail(groupId, session.get(GroupController.USER_KEY));
+        for (ChatRoom chat : ChatRoom.findPublicRoomsByGroup(groupId)) {
+            if (chat.connectedUsers.contains(user)) {
+                chat.leave(user);
+            }
+        }
+        user = user.merge();
+        user = User.disconnect(user);
         GroupController.index(groupId);
     }
     
