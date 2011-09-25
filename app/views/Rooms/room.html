@@ -93,7 +93,7 @@
     <input type="text" id="message" name="message" autocomplete="off" class="span11">
     <a href="#" class="btn success" id="send">   send   </a>
 </div>
-
+<div id="mess"></div>
 <script type="text/javascript" charset="${_response_encoding}">
     
     var lastMessage = ${lastMessage};
@@ -118,11 +118,13 @@
     $('#send').click(function(e) {
         var message = $('#message').val();
         $('#message').val('');
-        $('#thread').append('<div class="message you"><h2>${user.username}</h2><p style="text-align: justify">' + message + '</p></div>');
-        scrollDown();
-        $.post("@{say(groupId, room)}", {message: message}, function() {
+        if (message != "") {
+            $('#thread').append('<div class="message you"><h2>${user.username}</h2><p style="text-align: justify">' + message + '</p></div>');
             scrollDown();
-        });
+            $.post("@{say(groupId, room)}", {message: message}, function() {
+                scrollDown();
+            });
+        }
     });
     
     $('#message').keypress(function(e) {
@@ -159,7 +161,7 @@
     var refresh = function() {
         var url = "/${groupId}/rooms/${room}/messages.update/" + lastMessage;
         $.ajax({ type: "GET", url: url, success: function(msg){
-            if (message != "") {
+            if (msg.messages != "") {
                 $('#thread').append(msg.messages);
                 lastMessage = msg.last;
                 scrollDown();

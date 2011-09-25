@@ -48,7 +48,10 @@ public class Rooms extends Controller {
                 r.join(user);
             }
         }
-        Long lastMessage = C.eList(events).last().timestamp;
+        Long lastMessage = 0L;
+        if (!events.isEmpty()) {
+            lastMessage = C.eList(events).last().timestamp;
+        }
         render(user, groupId, group, users, privateRooms, events, room, rooms, roomTitle, lastMessage);
     }
 
