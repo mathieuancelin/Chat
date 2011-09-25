@@ -8,6 +8,8 @@ import models.OrganizationGroup;
 import models.User;
 import play.data.validation.Required;
 import play.mvc.*;
+import utils.C;
+import utils.F.Function;
 
 public class Rooms extends Controller {
     
@@ -115,6 +117,8 @@ public class Rooms extends Controller {
         render(rooms);
     }
     
+    /***** UGLY stuff assuming perfs are better with it *****/
+    
     public static void roomsUpdate(@Required String groupId, @Required String room) {
         StringBuilder builder = new StringBuilder();
         List<ChatRoom> rooms = ChatRoom.findPublicRoomsByGroup(groupId);
@@ -131,6 +135,7 @@ public class Rooms extends Controller {
         }
         renderText(builder.toString());
     }
+    
     public static void usersUpdate(@Required String groupId, @Required String room) {
         StringBuilder builder = new StringBuilder();
         User user = User.findByGroupAndEmail(groupId, session.get(GroupController.USER_KEY));
@@ -146,6 +151,44 @@ public class Rooms extends Controller {
         }
         renderText(builder.toString());
     }
+    
+    public static void messagesUpdate(@Required String groupId, @Required String room) {
+        List<Message> events = new ArrayList<Message>();
+        final User user = User.findByGroupAndEmail(groupId, session.get(GroupController.USER_KEY));
+        events = ChatRoom.findByGroupAndName(groupId, room).archiveSince(
+                Long.valueOf(session.get(GroupController.FROM_KEY)));
+        String messages = C.eList(events).map(new Function<Message, String>() {
+            public String apply(Message message) {
+                StringBuilder builder = new StringBuilder();
+                if (message.type == models.MessageType.HTML) {
+                    if (message.user.equals(user.mail)) {
+                        builder.append("<div class=\"message you\">");
+                    } else {
+                        builder.append("<div class=\"message\">");
+                    }
+                    builder.append("<h2>").append(message.username).append("</h2>");
+                    builder.append("<p style=\"text-align: justify\">");
+                    builder.append(message.text);
+                    builder.append("</p></div>");
+                }
+                if (message.type == models.MessageType.JOIN 
+                        || message.type == models.MessageType.LEAVE) {
+                    builder.append("<div class=\"message notice\">");
+                    builder.append("<h2></h2><p>");
+                    if (message.type == models.MessageType.JOIN) {
+                        builder.append(message.username).append(" joined the room");
+                    } else {
+                        builder.append(message.username).append(" left the room");
+                    }
+                    builder.append("</p></div>");
+                }
+                return builder.toString();
+            }
+        }).mkString("");
+        renderText(messages);
+    }
+    
+    /***** UGLY stuff assuming perfs are better with it *****/
 
     public static void setTitle(@Required String groupId, @Required String room, @Required String value) {
         ChatRoom r = ChatRoom.findByGroupAndName(groupId, room);
