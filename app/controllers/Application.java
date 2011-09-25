@@ -5,6 +5,7 @@ import java.util.List;
 import models.ChatRoom;
 import models.OrganizationGroup;
 import play.cache.Cache;
+import play.libs.Codec;
 import play.libs.Files;
 import play.libs.Images;
 import play.mvc.*;
@@ -38,5 +39,9 @@ public class Application extends Controller {
             uploads.mkdirs();
         }
         Files.copy(file, new File(uploads, file.getName()));
+    }
+    
+    public static void hashPass(String pass) {
+        renderText(Codec.hexSHA1(pass));
     }
 }
