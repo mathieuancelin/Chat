@@ -94,7 +94,6 @@
     <a href="#" class="btn success" id="send">   send   </a>
 </div>
 
-<div id="mess"></div>
 <script type="text/javascript" charset="${_response_encoding}">
     
     var lastMessage = ${lastMessage};
@@ -158,7 +157,6 @@
     }
 
     var refresh = function() {
-        $('#mess').html(lastMessage);
         var url = "/${groupId}/rooms/${room}/messages.update/" + lastMessage;
         $.ajax({ type: "GET", url: url, success: function(msg){
             if (message != "") {
