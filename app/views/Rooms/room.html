@@ -96,10 +96,30 @@
 
 <script type="text/javascript" charset="${_response_encoding}">
     
+    var autoscroll = true;
+    var scrolling = 0;
+    var topScrolling = 0;
+    
+    $("#thread").scroll(function(e) {
+        var newScrolling = $('#thread').scrollTop();
+        scrolling = newScrolling;
+        if (scrolling >= topScrolling) {
+            autoscroll = true;
+        }
+        if (scrolling > topScrolling) {
+            topScrolling = scrolling;
+        }
+        if (scrolling < topScrolling) {
+            autoscroll = false;
+        }
+    });
+    
     $('#send').click(function(e) {
         var message = $('#message').val();
         $('#message').val('');
-        $.post("@{say(groupId, room)}", {message: message});
+        $.post("@{say(groupId, room)}", {message: message}, function() {
+            scrollDown();
+        });
     });
     
     $('#message').keypress(function(e) {
@@ -124,7 +144,9 @@
     });
     
     var scrollDown = function() {
-        $('#thread').scrollTo('max')
+        if (autoscroll) {
+            $('#thread').scrollTo('max')
+        }
     }
 
     var focusInput = function() {
@@ -132,10 +154,10 @@
     }
 
     var refresh = function() {
-        // too much reloads : need special handlers
-        $('#thread').load('@{room(groupId, room)} #thread .message', function() {
-            focusInput()
-        });
+        $.ajax({ type: "GET", url: "@{Rooms.messagesUpdate(groupId, room)}", success: function(msg){
+            $('#thread').html(msg);
+            scrollDown();
+        }});
         $.ajax({ type: "GET", url: "@{Rooms.roomsUpdate(groupId, room)}", success: function(msg){
             $('#tabs').html(msg);
         }});
@@ -145,10 +167,8 @@
         $.ajax({ type: "GET", url: "@{Rooms.getTitle(groupId, room)}", success: function(msg){
             $('#thread-title').html("<p><i>" + msg + "</i></p>") 
         }});
+        focusInput();
     }
-    $(window).unload(function() {
-        $.post("@{Rooms.leaveAllRooms(groupId)}");
-    });
     $(document).ready( function() {
         scrollDown();
         focusInput();
