@@ -15,7 +15,7 @@ GET     /{groupId}/register                               GroupController.regist
 POST    /{groupId}/registration                           GroupController.registration
 GET     /{groupId}/login                                  GroupController.enter
 
-POST     /{groupId}/rooms/unload                          Rooms.leaveAllRooms
+POST    /{groupId}/rooms/unload                           Rooms.leaveAllRooms
 GET     /{groupId}/rooms/leave                            Rooms.leaveAllRoomsAndDisconnect
 GET     /{groupId}/rooms/private/{user1}/{user2}          Rooms.newPrivateRoom
 GET     /{groupId}/rooms/{room}                           Rooms.room
@@ -24,7 +24,9 @@ POST    /{groupId}/rooms/{room}/title                     Rooms.setTitle
 POST    /{groupId}/rooms/{room}/say                       Rooms.say
 GET     /{groupId}/rooms/{room}/leave                     Rooms.leave
 POST    /{groupId}/rooms                                  Rooms.newChatRoom  
-GET     /{groupId}/rooms                                  Rooms.rooms 
+GET     /{groupId}/rooms                                  Rooms.rooms
+GET     /{groupId}/rooms.update                           Rooms.roomsUpdate
+GET     /{groupId}/rooms/{room}/users.update              Rooms.usersUpdate 
 
 # Import Secure routes
 *       /                                                 module:secure

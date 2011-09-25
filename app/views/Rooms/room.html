@@ -114,19 +114,13 @@
         if (name == "" || name == null) {
             name = "New room";
         } else {
-            $.post("@{rooms(groupId)}", {name: name}, function(evt) {
-                $('#tabs').load("@{room(groupId, room)} #tabs li", function() {
-                    focusInput();
-                });
-            });
+            $.post("@{rooms(groupId)}", {name: name});
         }
     });
 
     $('#thread-title').click(function() {
         var value = prompt('Title');
-        $.post("@{setTitle(groupId, room)}", {value: value}, function(room) {
-            $('#thread-title').html(value);
-        });
+        $.post("@{setTitle(groupId, room)}", {value: value});
     });
     
     var scrollDown = function() {
@@ -142,9 +136,15 @@
         $('#thread').load('@{room(groupId, room)} #thread .message', function() {
             focusInput()
         });
-        $('#tabs').load('@{room(groupId, room)} #tabs li', function() {});
-        $('#who').load('@{room(groupId, room)} #who #room', function() {});
-        $('#thread-title').load('@{room(groupId, room)} #thread-title', function() {});
+        $.ajax({ type: "GET", url: "@{Rooms.roomsUpdate(groupId, room)}", success: function(msg){
+            $('#tabs').html(msg);
+        }});
+        $.ajax({ type: "GET", url: "@{Rooms.usersUpdate(groupId, room)}", success: function(msg){
+            $('#who').html(msg); 
+        }});
+        $.ajax({ type: "GET", url: "@{Rooms.getTitle(groupId, room)}", success: function(msg){
+            $('#thread-title').html("<p><i>" + msg + "</i></p>") 
+        }});
     }
     $(window).unload(function() {
         $.post("@{Rooms.leaveAllRooms(groupId)}");

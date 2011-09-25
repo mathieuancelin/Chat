@@ -53,7 +53,7 @@ public class Rooms extends Controller {
         errorValidUser();
         User user = User.findByGroupAndEmail(groupId, session.get(GroupController.USER_KEY));
         ChatRoom.findByGroupAndName(groupId, room).say(user, message);
-        room(groupId, room);
+        ok();
     }
     
     public static void leaveAllRoomsAndDisconnect(@Required String groupId) {
@@ -111,8 +111,40 @@ public class Rooms extends Controller {
     }
     
     public static void rooms(@Required String groupId) {
-        List<ChatRoom> rooms = ChatRoom.findAll();
+        List<ChatRoom> rooms = ChatRoom.findPublicRoomsByGroup(groupId);
         render(rooms);
+    }
+    
+    public static void roomsUpdate(@Required String groupId, @Required String room) {
+        StringBuilder builder = new StringBuilder();
+        List<ChatRoom> rooms = ChatRoom.findPublicRoomsByGroup(groupId);
+        for (ChatRoom r : rooms) {
+            if (room.equals(r.name)) {
+                builder.append("<li class=\"active\">");
+            } else {
+                builder.append("<li>");
+            }
+            builder.append("<a href=\"/").append(groupId)
+                .append("/rooms/").append(r.name)
+                .append("\">").append(r.name)
+                .append("</a></li>");
+        }
+        renderText(builder.toString());
+    }
+    public static void usersUpdate(@Required String groupId, @Required String room) {
+        StringBuilder builder = new StringBuilder();
+        User user = User.findByGroupAndEmail(groupId, session.get(GroupController.USER_KEY));
+        ChatRoom r = ChatRoom.findByGroupAndName(groupId, room);
+        List<User> users = r.connectedUsers;
+        for (User u : users) {
+            if (!u.mail.equals(user.mail)) {
+                builder.append("<div id=\"room\"><a href=\"");
+                builder.append("/").append(groupId).append("/rooms/private/")
+                        .append(user.mail).append("/").append(u.mail);
+                builder.append("\">").append(u.username).append("</a></div>");
+            }
+        }
+        renderText(builder.toString());
     }
 
     public static void setTitle(@Required String groupId, @Required String room, @Required String value) {
