@@ -118,6 +118,7 @@
         var message = $('#message').val();
         $('#message').val('');
         $('#thread').append('<div class="message you"><h2>${user.username}</h2><p style="text-align: justify">' + message + '</p></div>');
+        scrollDown();
         $.post("@{say(groupId, room)}", {message: message}, function() {
             scrollDown();
         });
