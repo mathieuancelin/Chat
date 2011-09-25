@@ -27,7 +27,7 @@ POST    /{groupId}/rooms                                  Rooms.newChatRoom
 GET     /{groupId}/rooms                                  Rooms.rooms
 GET     /{groupId}/rooms.update                           Rooms.roomsUpdate
 GET     /{groupId}/rooms/{room}/users.update              Rooms.usersUpdate 
-GET     /{groupId}/rooms/{room}/messages.update           Rooms.messagesUpdate 
+GET     /{groupId}/rooms/{room}/messages.update/{last}    Rooms.messagesUpdate 
 
 # Import Secure routes
 *       /                                                 module:secure

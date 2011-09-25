@@ -48,7 +48,8 @@ public class Rooms extends Controller {
                 r.join(user);
             }
         }
-        render(user, groupId, group, users, privateRooms, events, room, rooms, roomTitle);
+        Long lastMessage = C.eList(events).last().timestamp;
+        render(user, groupId, group, users, privateRooms, events, room, rooms, roomTitle, lastMessage);
     }
 
     public static void say(@Required String groupId, @Required String room, @Required String message) {
@@ -152,40 +153,56 @@ public class Rooms extends Controller {
         renderText(builder.toString());
     }
     
-    public static void messagesUpdate(@Required String groupId, @Required String room) {
+    public static void messagesUpdate(@Required String groupId, @Required String room, @Required Long last) {
         List<Message> events = new ArrayList<Message>();
         final User user = User.findByGroupAndEmail(groupId, session.get(GroupController.USER_KEY));
-        events = ChatRoom.findByGroupAndName(groupId, room).archiveSince(
-                Long.valueOf(session.get(GroupController.FROM_KEY)));
-        String messages = C.eList(events).map(new Function<Message, String>() {
-            public String apply(Message message) {
-                StringBuilder builder = new StringBuilder();
-                if (message.type == models.MessageType.HTML) {
-                    if (message.user.equals(user.mail)) {
-                        builder.append("<div class=\"message you\">");
-                    } else {
-                        builder.append("<div class=\"message\">");
+        events = ChatRoom.findByGroupAndName(groupId, room).archiveSinceExcluded(last);
+        if (!events.isEmpty()) {
+            Long l = C.eList(events).last().timestamp;
+            String messages = C.eList(events).map(new Function<Message, String>() {
+                public String apply(Message message) {
+                    StringBuilder builder = new StringBuilder();
+                    if (message.type == models.MessageType.HTML) {
+                        if (message.user.equals(user.mail)) {
+                            builder.append("<div class=\"message you\">");
+                        } else {
+                            builder.append("<div class=\"message\">");
+                        }
+                        builder.append("<h2>").append(message.username).append("</h2>");
+                        builder.append("<p style=\"text-align: justify\">");
+                        builder.append(message.text);
+                        builder.append("</p></div>");
                     }
-                    builder.append("<h2>").append(message.username).append("</h2>");
-                    builder.append("<p style=\"text-align: justify\">");
-                    builder.append(message.text);
-                    builder.append("</p></div>");
-                }
-                if (message.type == models.MessageType.JOIN 
-                        || message.type == models.MessageType.LEAVE) {
-                    builder.append("<div class=\"message notice\">");
-                    builder.append("<h2></h2><p>");
-                    if (message.type == models.MessageType.JOIN) {
-                        builder.append(message.username).append(" joined the room");
-                    } else {
-                        builder.append(message.username).append(" left the room");
+                    if (message.type == models.MessageType.JOIN 
+                            || message.type == models.MessageType.LEAVE) {
+                        builder.append("<div class=\"message notice\">");
+                        builder.append("<h2></h2><p>");
+                        if (message.type == models.MessageType.JOIN) {
+                            builder.append(message.username).append(" joined the room");
+                        } else {
+                            builder.append(message.username).append(" left the room");
+                        }
+                        builder.append("</p></div>");
                     }
-                    builder.append("</p></div>");
+                    return builder.toString();
                 }
-                return builder.toString();
-            }
-        }).mkString("");
-        renderText(messages);
+            }).mkString("");
+            renderJSON(new Messages(messages, l));
+        } else {
+            renderJSON(new Messages("", null));
+        }
+    }
+    
+    public static class Messages {
+        public String messages;
+        public Long last;
+        
+        public Messages(){}
+
+        public Messages(String messages, Long last) {
+            this.messages = messages;
+            this.last = last;
+        }
     }
     
     /***** UGLY stuff assuming perfs are better with it *****/

@@ -66,6 +66,10 @@ public class Message extends Model {
         return Message.find("room.id = ? and timestamp >= ?", roomId, timestamp).fetch();
     }
     
+    public static List<Message> findByRoomFromExcluded(Long roomId, Long timestamp) {
+        return Message.find("room.id = ? and timestamp > ?", roomId, timestamp).fetch();
+    }
+    
     public String username() {
         return username;
     }

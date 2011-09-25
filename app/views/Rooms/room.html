@@ -94,8 +94,10 @@
     <a href="#" class="btn success" id="send">   send   </a>
 </div>
 
+<div id="mess"></div>
 <script type="text/javascript" charset="${_response_encoding}">
     
+    var lastMessage = ${lastMessage};
     var autoscroll = true;
     var scrolling = 0;
     var topScrolling = 0;
@@ -156,9 +158,14 @@
     }
 
     var refresh = function() {
-        $.ajax({ type: "GET", url: "@{Rooms.messagesUpdate(groupId, room)}", success: function(msg){
-            $('#thread').html(msg);
-            scrollDown();
+        $('#mess').html(lastMessage);
+        var url = "/${groupId}/rooms/${room}/messages.update/" + lastMessage;
+        $.ajax({ type: "GET", url: url, success: function(msg){
+            if (message != "") {
+                $('#thread').append(msg.messages);
+                lastMessage = msg.last;
+                scrollDown();
+            }
         }});
         $.ajax({ type: "GET", url: "@{Rooms.roomsUpdate(groupId, room)}", success: function(msg){
             $('#tabs').html(msg);

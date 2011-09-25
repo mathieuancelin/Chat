@@ -114,6 +114,10 @@ public class ChatRoom extends Model {
         return Message.findByRoomFrom(id, timestamp);
     }
     
+    public List<Message> archiveSinceExcluded(Long timestamp) {
+        return Message.findByRoomFromExcluded(id, timestamp);
+    }
+    
     public List<Message> archiveLast100() {
         int start = 0;
         if (messages.size() > LASTS + 1) {
