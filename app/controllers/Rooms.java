@@ -2,30 +2,37 @@ package controllers;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
 import models.ChatRoom;
 import models.Message;
 import models.OrganizationGroup;
 import models.User;
 import play.data.validation.Required;
+import play.libs.F.ArchivedEventStream;
+import play.libs.F.Either;
+import play.libs.F.EventStream;
+import play.libs.F.Promise;
+import static play.libs.F.Matcher.*;
+import static play.mvc.Http.WebSocketEvent.*;
 import play.mvc.*;
+import play.mvc.Http.WebSocketClose;
+import play.mvc.Http.WebSocketEvent;
 import utils.C;
 import utils.F.Function;
 
 public class Rooms extends Controller {
-    
+
     public static final String WELCOME_ROOM = "Home";
-    
     public static final String PRIVATE_KEY = "Private-";
-    
     public static final String CHOOSE_VALID_USER = "Please choose a valid user.";
-    
+
     private static void errorValidUser() {
         if (!session.contains(GroupController.USER_KEY)) {
             flash.error(CHOOSE_VALID_USER);
             Application.index();
         }
     }
-    
+
     public static void room(@Required String groupId, @Required String room) {
         errorValidUser();
         User user = User.findByGroupAndEmail(groupId, session.get(GroupController.USER_KEY));
@@ -34,8 +41,7 @@ public class Rooms extends Controller {
         }
         List<Message> events = new ArrayList<Message>();
         List<ChatRoom> rooms = ChatRoom.findPublicRoomsByGroup(groupId);
-        List<ChatRoom> privateRooms = ChatRoom
-                .findPrivateRoomsByGroupAndUser(groupId, user);
+        List<ChatRoom> privateRooms = ChatRoom.findPrivateRoomsByGroupAndUser(groupId, user);
         ChatRoom r = ChatRoom.findByGroupAndName(groupId, room);
         List<User> users = r.connectedUsers;//User.findByGroupAndConnected(groupId);
         String roomTitle = "";
@@ -61,7 +67,7 @@ public class Rooms extends Controller {
         ChatRoom.findByGroupAndName(groupId, room).say(user, message);
         ok();
     }
-    
+
     public static void leaveAllRoomsAndDisconnect(@Required String groupId) {
         errorValidUser();
         User user = User.findByGroupAndEmail(groupId, session.get(GroupController.USER_KEY));
@@ -75,7 +81,7 @@ public class Rooms extends Controller {
         session.clear();
         GroupController.index(groupId);
     }
-    
+
     public static void leaveAllRooms(@Required String groupId) {
         errorValidUser();
         User user = User.findByGroupAndEmail(groupId, session.get(GroupController.USER_KEY));
@@ -88,24 +94,24 @@ public class Rooms extends Controller {
         user = User.disconnect(user);
         GroupController.index(groupId);
     }
-    
+
     public static void leave(@Required String groupId, String room) {
         errorValidUser();
         User user = User.findByGroupAndEmail(groupId, session.get(GroupController.USER_KEY));
         ChatRoom.findByGroupAndName(groupId, room).leave(user);
         room(groupId, WELCOME_ROOM);
     }
-    
+
     public static void newPrivateRoom(@Required String groupId, @Required String user1, @Required String user2) {
         User u1 = User.findByGroupAndEmail(groupId, user1);
         User u2 = User.findByGroupAndEmail(groupId, user2);
         String value = PRIVATE_KEY + u1.username + "-" + u2.username;
-        ChatRoom room = ChatRoom.getOrCreatePrivateRoom(groupId, value, 
+        ChatRoom room = ChatRoom.getOrCreatePrivateRoom(groupId, value,
                 "Private conversation between " + value, user1, user2);
         room.save();
         room(groupId, room.name);
     }
-    
+
     public static void newChatRoom(@Required String groupId, @Required String name) {
         String value = ChatRoom.DEFAULT_TITLE;
         if (name != null && !name.equals("")) {
@@ -115,14 +121,13 @@ public class Rooms extends Controller {
         room.save();
         ok();
     }
-    
+
     public static void rooms(@Required String groupId) {
         List<ChatRoom> rooms = ChatRoom.findPublicRoomsByGroup(groupId);
         render(rooms);
     }
-    
+
     /***** UGLY stuff assuming perfs are better with it *****/
-    
     public static void roomsUpdate(@Required String groupId, @Required String room) {
         StringBuilder builder = new StringBuilder();
         List<ChatRoom> rooms = ChatRoom.findPublicRoomsByGroup(groupId);
@@ -132,14 +137,11 @@ public class Rooms extends Controller {
             } else {
                 builder.append("<li>");
             }
-            builder.append("<a href=\"/").append(groupId)
-                .append("/rooms/").append(r.name)
-                .append("\">").append(r.name)
-                .append("</a></li>");
+            builder.append("<a href=\"/").append(groupId).append("/rooms/").append(r.name).append("\">").append(r.name).append("</a></li>");
         }
         renderText(builder.toString());
     }
-    
+
     public static void usersUpdate(@Required String groupId, @Required String room) {
         StringBuilder builder = new StringBuilder();
         User user = User.findByGroupAndEmail(groupId, session.get(GroupController.USER_KEY));
@@ -148,14 +150,13 @@ public class Rooms extends Controller {
         for (User u : users) {
             if (!u.mail.equals(user.mail)) {
                 builder.append("<div id=\"room\"><a href=\"");
-                builder.append("/").append(groupId).append("/rooms/private/")
-                        .append(user.mail).append("/").append(u.mail);
+                builder.append("/").append(groupId).append("/rooms/private/").append(user.mail).append("/").append(u.mail);
                 builder.append("\">").append(u.username).append("</a></div>");
             }
         }
         renderText(builder.toString());
     }
-    
+
     public static void messagesUpdate(@Required String groupId, @Required String room, @Required Long last) {
         List<Message> events = new ArrayList<Message>();
         final User user = User.findByGroupAndEmail(groupId, session.get(GroupController.USER_KEY));
@@ -163,6 +164,7 @@ public class Rooms extends Controller {
         if (!events.isEmpty()) {
             Long l = C.eList(events).last().timestamp;
             String messages = C.eList(events).map(new Function<Message, String>() {
+
                 public String apply(Message message) {
                     StringBuilder builder = new StringBuilder();
                     if (message.type == models.MessageType.HTML) {
@@ -176,7 +178,7 @@ public class Rooms extends Controller {
                         builder.append(message.text);
                         builder.append("</p></div>");
                     }
-                    if (message.type == models.MessageType.JOIN 
+                    if (message.type == models.MessageType.JOIN
                             || message.type == models.MessageType.LEAVE) {
                         builder.append("<div class=\"message notice\">");
                         builder.append("<h2></h2><p>");
@@ -195,21 +197,22 @@ public class Rooms extends Controller {
             renderJSON(new Messages("", null));
         }
     }
-    
+
     public static class Messages {
+
         public String messages;
         public Long last;
-        
-        public Messages(){}
+
+        public Messages() {
+        }
 
         public Messages(String messages, Long last) {
             this.messages = messages;
             this.last = last;
         }
     }
-    
-    /***** UGLY stuff assuming perfs are better with it *****/
 
+    /***** UGLY stuff assuming perfs are better with it *****/
     public static void setTitle(@Required String groupId, @Required String room, @Required String value) {
         ChatRoom r = ChatRoom.findByGroupAndName(groupId, room);
         if (r != null) {
@@ -227,6 +230,100 @@ public class Rooms extends Controller {
             renderText(r.title);
         } else {
             error();
+        }
+    }
+
+    public static class ChatRoomSocket extends WebSocketController {
+        
+        public static ConcurrentHashMap<GroupNameRoomKey, ArchivedEventStream<Message>> roomsEvents =
+                new ConcurrentHashMap<GroupNameRoomKey, ArchivedEventStream<Message>>();
+        
+        public static EventStream<Message> getRoomEvents(String room, String groupId) {
+            GroupNameRoomKey key = new GroupNameRoomKey(groupId, room);
+            if (!roomsEvents.contains(key)) {
+                roomsEvents.put(key, new ArchivedEventStream<Message>(100));
+            }
+            return roomsEvents.get(key).eventStream();
+        }
+
+        public static void join(String roomName, String groupId) {
+
+            errorValidUser();
+            User user = User.findByGroupAndEmail(groupId, session.get(GroupController.USER_KEY));
+            ChatRoom roomRef = ChatRoom.findByGroupAndName(groupId, roomName);
+            ChatRoom r = roomRef.merge();
+
+            r.join(user);
+            EventStream<Message> roomMessagesStream = getRoomEvents(roomName, groupId);
+
+            while (inbound.isOpen()) {
+                Either<WebSocketEvent, Message> e = await(Promise.waitEither(
+                        inbound.nextEvent(),
+                        roomMessagesStream.nextEvent()));
+                ChatRoom room = roomRef.merge();
+                for (String userMessage : TextFrame.match(e._1)) {
+                    Message mess = room.say(user, userMessage);
+                    roomMessagesStream.publish(mess);
+                }
+
+//                // Case: Someone joined the room
+//                for (ChatRoom.Join joined : ClassOf(ChatRoom.Join.class).match(e._2)) {
+//                    outbound.send("join:%s", joined.user);
+//                }
+
+                for (Message message : ClassOf(Message.class).match(e._2)) {
+                    // TODO : change it
+                    outbound.send("%s:%s:%s", message.timestamp, message.username(), message.text);
+                }
+
+//                // Case: Someone left the room
+//                for (ChatRoom.Leave left : ClassOf(ChatRoom.Leave.class).match(e._2)) {
+//                    outbound.send("leave:%s", left.user);
+//                }
+
+                for (WebSocketClose closed : SocketClosed.match(e._1)) {
+                    room.leave(user);
+                    disconnect();
+                }
+            }
+        }
+    }
+    
+    public static class GroupNameRoomKey {
+        
+        public final String group;
+        
+        public final String name;
+
+        public GroupNameRoomKey(String group, String name) {
+            this.group = group;
+            this.name = name;
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (obj == null) {
+                return false;
+            }
+            if (getClass() != obj.getClass()) {
+                return false;
+            }
+            final GroupNameRoomKey other = (GroupNameRoomKey) obj;
+            if ((this.group == null) ? (other.group != null) : !this.group.equals(other.group)) {
+                return false;
+            }
+            if ((this.name == null) ? (other.name != null) : !this.name.equals(other.name)) {
+                return false;
+            }
+            return true;
+        }
+
+        @Override
+        public int hashCode() {
+            int hash = 5;
+            hash = 29 * hash + (this.group != null ? this.group.hashCode() : 0);
+            hash = 29 * hash + (this.name != null ? this.name.hashCode() : 0);
+            return hash;
         }
     }
 }

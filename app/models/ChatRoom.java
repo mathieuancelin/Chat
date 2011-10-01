@@ -96,14 +96,15 @@ public class ChatRoom extends Model {
         save();
     }
 
-    public void say(User user, String text) {
+    public Message say(User user, String text) {
         if(text == null || text.trim().equals("")) {
-            return;
+            return null;
         }
         Message mess = new Message(user.mail, text, this);
-        mess.save();
+        mess = mess.save();
         addMessage(mess);
         save();
+        return mess;
     }
 
     public List<Message> archive() {

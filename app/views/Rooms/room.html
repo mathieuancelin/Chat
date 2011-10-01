@@ -96,10 +96,33 @@
 <div id="mess"></div>
 <script type="text/javascript" charset="${_response_encoding}">
     
-    var lastMessage = ${lastMessage};
+    var username = "${user.username}";
+    var lastMessage = "${lastMessage}";
     var autoscroll = true;
     var scrolling = 0;
     var topScrolling = 0;
+    
+    var socket = new WebSocket('@@{Rooms.ChatRoomSocket.join(room, groupId)}');
+    
+    var display = function(event) {
+        var you = '';
+        if (username == event.user) {
+            you = 'you';
+        }
+        var msg = '<div class="message ' + you + '"><h2>' + event.user + '</h2><p style="text-align: justify">' + event.text + '</p></div>';
+        $('#thread').append(msg);
+        lastMessage = event.last;
+        scrollDown();
+    }
+    
+    socket.onmessage = function(event) {
+        var parts = /^([^:]+):([^:]+)(:(.*))?$/.exec(event.data)
+        display({
+            last: parts[1],
+            user: parts[2],
+            text: parts[4]
+        })
+    }
     
     $("#thread").scroll(function(e) {
         var newScrolling = $('#thread').scrollTop();
@@ -120,11 +143,13 @@
         $('#message').val('');
         if (message != "") {
             //$('#thread').append('<div class="message you"><h2>${user.username}</h2><p style="text-align: justify">' + message + '</p></div>');
+            socket.send(message);
             scrollDown();
-            $.post("@{say(groupId, room)}", {message: message}, function() {
+            /**$.post("@{say(groupId, room)}", {message: message}, function() {
                 scrollDown();
-            });
+            });**/
         }
+        e.preventDefault();
     });
     
     $('#message').keypress(function(e) {
@@ -159,14 +184,14 @@
     }
 
     var refresh = function() {
-        var url = "/${groupId}/rooms/${room}/messages.update/" + lastMessage;
+        /**var url = "/${groupId}/rooms/${room}/messages.update/" + lastMessage;
         $.ajax({ type: "GET", url: url, success: function(msg){
             if (msg.messages != "") {
                 $('#thread').append(msg.messages);
                 lastMessage = msg.last;
                 scrollDown();
             }
-        }});
+        }});**/
         $.ajax({ type: "GET", url: "@{Rooms.roomsUpdate(groupId, room)}", success: function(msg){
             $('#tabs').html(msg);
         }});
