@@ -111,11 +111,13 @@ public class User extends Model {
     }
     
     public static User disconnect(User user) {
+        user = user.merge();
         user.connected = false;
         return user.save();
     } 
     
     public static User connect(User user) {
+        user = user.merge();
         user.connected = true;
         return user.save();
     } 
