@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import models.ChatRoom;
+import models.Join;
+import models.Leave;
 import models.Message;
 import models.OrganizationGroup;
 import models.User;
@@ -235,54 +237,47 @@ public class Rooms extends Controller {
 
     public static class ChatRoomSocket extends WebSocketController {
         
-        public static ConcurrentHashMap<GroupNameRoomKey, ArchivedEventStream<Message>> roomsEvents =
+        public static final ConcurrentHashMap<GroupNameRoomKey, ArchivedEventStream<Message>> roomsEvents =
                 new ConcurrentHashMap<GroupNameRoomKey, ArchivedEventStream<Message>>();
         
-        public static EventStream<Message> getRoomEvents(String room, String groupId) {
+        public static ArchivedEventStream<Message> getRoomEvents(String room, String groupId) {
             GroupNameRoomKey key = new GroupNameRoomKey(groupId, room);
-            if (!roomsEvents.contains(key)) {
+            if (!roomsEvents.containsKey(key)) {
                 roomsEvents.put(key, new ArchivedEventStream<Message>(100));
             }
-            return roomsEvents.get(key).eventStream();
+            return roomsEvents.get(key);
         }
 
         public static void join(String roomName, String groupId) {
 
             errorValidUser();
-            User user = User.findByGroupAndEmail(groupId, session.get(GroupController.USER_KEY));
-            ChatRoom roomRef = ChatRoom.findByGroupAndName(groupId, roomName);
-            ChatRoom r = roomRef.merge();
-
-            r.join(user);
-            EventStream<Message> roomMessagesStream = getRoomEvents(roomName, groupId);
+            ArchivedEventStream<Message> roomMessagesStream = getRoomEvents(roomName, groupId);
+            EventStream<Message> stream = roomMessagesStream.eventStream();
 
             while (inbound.isOpen()) {
                 Either<WebSocketEvent, Message> e = await(Promise.waitEither(
-                        inbound.nextEvent(),
-                        roomMessagesStream.nextEvent()));
-                ChatRoom room = roomRef.merge();
+                        inbound.nextEvent(), stream.nextEvent()));
                 for (String userMessage : TextFrame.match(e._1)) {
+                    User user = User.findByGroupAndEmail(groupId, session.get(GroupController.USER_KEY));
+                    ChatRoom room = ChatRoom.findByGroupAndName(groupId, roomName);
                     Message mess = room.say(user, userMessage);
                     roomMessagesStream.publish(mess);
                 }
 
-//                // Case: Someone joined the room
-//                for (ChatRoom.Join joined : ClassOf(ChatRoom.Join.class).match(e._2)) {
-//                    outbound.send("join:%s", joined.user);
-//                }
-
-                for (Message message : ClassOf(Message.class).match(e._2)) {
-                    // TODO : change it
-                    outbound.send("%s:%s:%s", message.timestamp, message.username(), message.text);
+                for (Join joined : ClassOf(Join.class).match(e._2)) {
+                    outbound.send("join:%s:%s:%s", joined.timestamp, joined.username(), joined.text);
                 }
 
-//                // Case: Someone left the room
-//                for (ChatRoom.Leave left : ClassOf(ChatRoom.Leave.class).match(e._2)) {
-//                    outbound.send("leave:%s", left.user);
-//                }
+                for (Message message : ClassOf(Message.class).match(e._2)) {
+                    outbound.send("message:%s:%s:%s", message.timestamp, message.username(), message.text);
+                }
+
+                for (Leave left : ClassOf(Leave.class).match(e._2)) {
+                    outbound.send("leave:%s:%s:%s", left.timestamp, left.username(), left.text);
+                }
 
                 for (WebSocketClose closed : SocketClosed.match(e._1)) {
-                    room.leave(user);
+                    //room.leave(user);
                     disconnect();
                 }
             }

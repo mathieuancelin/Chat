@@ -96,8 +96,8 @@
 <div id="mess"></div>
 <script type="text/javascript" charset="${_response_encoding}">
     
-    var username = "${user.username}";
-    var lastMessage = "${lastMessage}";
+    var username = '${user.username}';
+    var lastMessage = '${lastMessage}';
     var autoscroll = true;
     var scrolling = 0;
     var topScrolling = 0;
@@ -105,23 +105,27 @@
     var socket = new WebSocket('@@{Rooms.ChatRoomSocket.join(room, groupId)}');
     
     var display = function(event) {
-        var you = '';
+        var style = '';
         if (username == event.user) {
-            you = 'you';
+            style = 'you';
         }
-        var msg = '<div class="message ' + you + '"><h2>' + event.user + '</h2><p style="text-align: justify">' + event.text + '</p></div>';
+        if (event.type == 'join' || event.type == 'leave') {
+            style = 'notice';
+        }
+        var msg = '<div class="message ' + style + '"><h2>' + event.user + '</h2><p style="text-align: justify">' + event.text + '</p></div>';
         $('#thread').append(msg);
         lastMessage = event.last;
         scrollDown();
     }
     
     socket.onmessage = function(event) {
-        var parts = /^([^:]+):([^:]+)(:(.*))?$/.exec(event.data)
+        var parts = /^([^:]+):([^:]+):([^:]+):([^:]+)$/.exec(event.data);
         display({
-            last: parts[1],
-            user: parts[2],
+            type: parts[1],
+            last: parts[2],
+            user: parts[3],
             text: parts[4]
-        })
+        });
     }
     
     $("#thread").scroll(function(e) {
@@ -142,14 +146,11 @@
         var message = $('#message').val();
         $('#message').val('');
         if (message != "") {
-            //$('#thread').append('<div class="message you"><h2>${user.username}</h2><p style="text-align: justify">' + message + '</p></div>');
             socket.send(message);
             scrollDown();
-            /**$.post("@{say(groupId, room)}", {message: message}, function() {
-                scrollDown();
-            });**/
         }
         e.preventDefault();
+        focusInput();
     });
     
     $('#message').keypress(function(e) {
@@ -184,14 +185,6 @@
     }
 
     var refresh = function() {
-        /**var url = "/${groupId}/rooms/${room}/messages.update/" + lastMessage;
-        $.ajax({ type: "GET", url: url, success: function(msg){
-            if (msg.messages != "") {
-                $('#thread').append(msg.messages);
-                lastMessage = msg.last;
-                scrollDown();
-            }
-        }});**/
         $.ajax({ type: "GET", url: "@{Rooms.roomsUpdate(groupId, room)}", success: function(msg){
             $('#tabs').html(msg);
         }});
@@ -201,12 +194,11 @@
         $.ajax({ type: "GET", url: "@{Rooms.getTitle(groupId, room)}", success: function(msg){
             $('#thread-title').html("<p><i>" + msg + "</i></p>") 
         }});
-        focusInput();
     }
     $(document).ready( function() {
         scrollDown();
         focusInput();
-        setInterval(refresh, 1000);
+        setInterval(refresh, 3000);
     });
     
 </script>
