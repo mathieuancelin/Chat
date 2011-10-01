@@ -6,7 +6,7 @@ import javax.persistence.Entity;
 public class Leave extends Message {
     
     public Leave(String user, ChatRoom room) {
-        super(user, user + " leave the room.", MessageType.LEAVE, room);
+        super(user, user + " left the room.", MessageType.LEAVE, room);
     }
 }
 
