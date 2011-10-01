@@ -12,6 +12,7 @@ public class BotMaster {
         messagesBots.clear();
         messagesBots.add(URLBot.INSTANCE);
         messagesBots.add(ImagesBot.INSTANCE);
+        messagesBots.add(GistBot.INSTANCE);
     }
     
 }
