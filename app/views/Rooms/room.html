@@ -112,10 +112,14 @@
         if (event.type == 'join' || event.type == 'leave') {
             style = 'notice';
         }
-        var msg = '<div class="message ' + style + '"><h2>' + event.user + '</h2><p style="text-align: justify">' + event.text + '</p></div>';
-        $('#thread').append(msg);
-        lastMessage = event.last;
-        scrollDown();
+        if (event.last != lastMessage) {
+            var msg = '<div class="message ' + style + '"><h2>' 
+                + event.user + '</h2><p style="text-align: justify">' 
+                + event.text + '</p></div>';
+            $('#thread').append(msg);
+            lastMessage = event.last;
+            scrollDown();
+        }
     }
     
     socket.onmessage = function(event) {

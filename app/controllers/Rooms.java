@@ -243,7 +243,7 @@ public class Rooms extends Controller {
         public static ArchivedEventStream<Message> getRoomEvents(String room, String groupId) {
             GroupNameRoomKey key = new GroupNameRoomKey(groupId, room);
             if (!roomsEvents.containsKey(key)) {
-                roomsEvents.put(key, new ArchivedEventStream<Message>(100));
+                roomsEvents.putIfAbsent(key, new ArchivedEventStream<Message>(1));
             }
             return roomsEvents.get(key);
         }
@@ -255,8 +255,9 @@ public class Rooms extends Controller {
             EventStream<Message> stream = roomMessagesStream.eventStream();
 
             while (inbound.isOpen()) {
-                Either<WebSocketEvent, Message> e = await(Promise.waitEither(
-                        inbound.nextEvent(), stream.nextEvent()));
+                Either<WebSocketEvent, Message> e = await
+                        (Promise.waitEither(inbound.nextEvent(), stream.nextEvent()));
+                        
                 for (String userMessage : TextFrame.match(e._1)) {
                     User user = User.findByGroupAndEmail(groupId, session.get(GroupController.USER_KEY));
                     ChatRoom room = ChatRoom.findByGroupAndName(groupId, roomName);
